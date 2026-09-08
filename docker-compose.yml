@@ -1,0 +1,29 @@
+services:
+  web:
+    build: .
+    container_name: tgdumper-web
+    restart: unless-stopped
+    ports:
+      - "1337:1337"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./sessions:/app/sessions
+      - ./dumps:/app/dumps
+      - ./landing/media:/app/landing/media
+    command: ["uvicorn", "web.app:app", "--host", "0.0.0.0", "--port", "1337"]
+
+  bot:
+    build: .
+    container_name: tgdumper-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./sessions:/app/sessions
+      - ./dumps:/app/dumps
+    command: ["python", "bot_main.py"]
+    depends_on:
+      - web

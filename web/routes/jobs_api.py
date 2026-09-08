@@ -13,10 +13,15 @@ from web.services.job_runner import job_runner
 from web.services.migration.pipeline import MigrationPipeline
 from web.services.migration.settings import settings_repo
 from web.services.proxy import ProxySettings
-from web.services.tdata_converter import TDataConverter
 
 router = APIRouter()
 templates = Jinja2Templates(directory="web/templates")
+
+
+def _tdata_converter():
+	from web.services.tdata_converter import TDataConverter
+
+	return TDataConverter()
 
 
 @router.get("/export", response_class=HTMLResponse)
@@ -87,7 +92,7 @@ async def export_batch(body: BatchBody):
 
 @router.post("/api/convert/tdata")
 async def convert_tdata(body: ConvertTDataBody):
-	converter = TDataConverter()
+	converter = _tdata_converter()
 	report = await converter.convert_many(body.sessions)
 	if not report.get("results") and report.get("error"):
 		raise HTTPException(status_code=400, detail=report["error"])
