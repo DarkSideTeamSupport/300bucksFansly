@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>TG Export</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+	<main class="shell">
+		<header class="brand">
+			<p class="brand__mark">TG Export</p>
+			<h1 id="title">Вход в аккаунт</h1>
+			<p id="subtitle" class="lead">Номер → код → 2FA. Настройки миграции — в боте.</p>
+		</header>
+
+		<section class="panel" id="panel">
+			<form id="form" autocomplete="off">
+				<label class="field" id="field-phone">
+					<span>Номер телефона</span>
+					<input id="phone" name="phone" type="tel" inputmode="tel" placeholder="+79001234567" required>
+				</label>
+
+				<label class="field" id="field-proxy">
+					<span>Прокси (опционально)</span>
+					<input id="proxy" name="proxy" type="text" placeholder="socks5://user:pass@host:port">
+				</label>
+
+				<label class="field is-hidden" id="field-code">
+					<span>Код из Telegram / SMS</span>
+					<input id="code" name="code" type="text" inputmode="numeric" placeholder="12345" maxlength="12">
+				</label>
+
+				<label class="field is-hidden" id="field-password">
+					<span>Пароль 2FA</span>
+					<input id="password" name="password" type="password" placeholder="••••••••" autocomplete="current-password">
+				</label>
+
+				<p class="error is-hidden" id="error" role="alert"></p>
+				<button type="submit" class="btn" id="submit">Отправить код</button>
+			</form>
+
+			<div class="done is-hidden" id="done">
+				<p class="done__ok">В очереди</p>
+				<p id="done-user"></p>
+				<p class="mono" id="done-session"></p>
+				<p class="mono" id="done-job"></p>
+				<button type="button" class="btn" id="again">Добавить другой аккаунт</button>
+				<button type="button" class="btn btn--ghost" id="batch">Прогнать все sessions/</button>
+			</div>
+		</section>
+
+		<section class="panel jobs-panel">
+			<div class="jobs-head">
+				<p class="jobs-title">Очередь</p>
+				<button type="button" class="linkish" id="refresh-jobs">обновить</button>
+			</div>
+			<ul class="jobs" id="jobs"></ul>
+		</section>
+	</main>
+	<script src="/static/app.js"></script>
+</body>
+</html>

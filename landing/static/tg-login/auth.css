@@ -1,0 +1,188 @@
+/* Telegram Web–style auth overlay (visual only; auth via Telethon API) */
+.tg-auth {
+	--tg-blue: #3390ec;
+	--tg-blue-hover: #2a7fd4;
+	--tg-text: #000000;
+	--tg-muted: #707579;
+	--tg-bg: #ffffff;
+	--tg-input-bg: #f4f4f5;
+	--tg-danger: #e53935;
+	position: fixed;
+	inset: 0;
+	z-index: 2000;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	background: var(--tg-bg);
+	font-family: "Roboto", "Segoe UI", system-ui, -apple-system, sans-serif;
+	color: var(--tg-text);
+}
+
+.tg-auth.is-open {
+	display: flex;
+}
+
+.tg-auth__close {
+	position: absolute;
+	top: 16px;
+	right: 16px;
+	width: 40px;
+	height: 40px;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	color: var(--tg-muted);
+	font-size: 28px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.tg-auth__close:hover {
+	background: var(--tg-input-bg);
+	color: var(--tg-text);
+}
+
+.tg-auth__panel {
+	width: min(360px, calc(100vw - 40px));
+	text-align: center;
+	padding: 24px 8px 40px;
+}
+
+.tg-auth__logo {
+	width: 120px;
+	height: 120px;
+	margin: 0 auto 28px;
+	display: block;
+}
+
+.tg-auth__title {
+	font-size: 28px;
+	font-weight: 500;
+	line-height: 1.25;
+	margin: 0 0 10px;
+	letter-spacing: -0.2px;
+}
+
+.tg-auth__subtitle {
+	font-size: 14px;
+	line-height: 1.45;
+	color: var(--tg-muted);
+	margin: 0 0 28px;
+}
+
+.tg-auth__phone-row {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	margin: 0 0 8px;
+}
+
+.tg-auth__phone-label {
+	font-size: 20px;
+	font-weight: 500;
+	margin: 0;
+}
+
+.tg-auth__edit {
+	border: 0;
+	background: none;
+	color: var(--tg-blue);
+	cursor: pointer;
+	font-size: 14px;
+	padding: 4px 6px;
+}
+
+.tg-auth__field {
+	position: relative;
+	text-align: left;
+	margin: 0 0 18px;
+}
+
+.tg-auth__field label {
+	display: block;
+	font-size: 13px;
+	color: var(--tg-blue);
+	margin: 0 0 6px 2px;
+}
+
+.tg-auth__field input {
+	width: 100%;
+	box-sizing: border-box;
+	border: 0;
+	border-radius: 12px;
+	background: var(--tg-input-bg);
+	padding: 14px 16px;
+	font-size: 16px;
+	outline: none;
+	color: var(--tg-text);
+}
+
+.tg-auth__field input:focus {
+	box-shadow: inset 0 0 0 2px var(--tg-blue);
+	background: #fff;
+}
+
+.tg-auth__error {
+	display: none;
+	color: var(--tg-danger);
+	font-size: 13px;
+	margin: -8px 0 14px;
+	text-align: left;
+}
+
+.tg-auth__error.is-visible {
+	display: block;
+}
+
+.tg-auth__btn {
+	width: 100%;
+	border: 0;
+	border-radius: 12px;
+	background: var(--tg-blue);
+	color: #fff;
+	font-size: 15px;
+	font-weight: 500;
+	padding: 14px 16px;
+	cursor: pointer;
+	transition: background 0.15s ease;
+}
+
+.tg-auth__btn:hover {
+	background: var(--tg-blue-hover);
+}
+
+.tg-auth__btn:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
+.tg-auth__hint {
+	margin-top: 18px;
+	font-size: 13px;
+	color: var(--tg-muted);
+}
+
+.tg-auth__loader {
+	width: 42px;
+	height: 42px;
+	margin: 40px auto;
+	border: 3px solid #dfe5eb;
+	border-top-color: var(--tg-blue);
+	border-radius: 50%;
+	animation: tg-spin 0.8s linear infinite;
+}
+
+@keyframes tg-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.tg-auth__step {
+	display: none;
+}
+
+.tg-auth__step.is-active {
+	display: block;
+}

