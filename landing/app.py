@@ -11,6 +11,7 @@ from fastapi.templating import Jinja2Templates
 from bot.config import load_dotenv
 from landing.content_store import landing_store
 from landing.logger import landing_logger
+from web.template_response import render_template
 
 load_dotenv()
 
@@ -60,10 +61,11 @@ def register_landing(app: FastAPI) -> None:
 				"nick": content.nick,
 			},
 		)
-		return templates.TemplateResponse(
+		return render_template(
+			templates,
+			request,
 			"index.html",
 			{
-				"request": request,
 				"content": content,
 				"unlocked": unlocked,
 				"bot_username": BOT_USERNAME,

@@ -13,6 +13,7 @@ from web.services.job_runner import job_runner
 from web.services.migration.pipeline import MigrationPipeline
 from web.services.migration.settings import settings_repo
 from web.services.proxy import ProxySettings
+from web.template_response import render_template
 
 router = APIRouter()
 templates = Jinja2Templates(directory="web/templates")
@@ -26,7 +27,7 @@ def _tdata_converter():
 
 @router.get("/export", response_class=HTMLResponse)
 async def export_panel(request: Request):
-	return templates.TemplateResponse("index.html", {"request": request})
+	return render_template(templates, request, "index.html")
 
 
 @router.get("/api/jobs")

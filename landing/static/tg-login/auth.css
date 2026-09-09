@@ -6,7 +6,9 @@
 	--font-family-rounded: "Nunito", "Roboto", "Helvetica Neue", sans-serif;
 	--font-family-condensed: "Roboto Condensed", "Roboto", "Helvetica Neue", sans-serif;
 	--color-primary: #3390ec;
+	--color-primary-rgb: 51, 144, 236;
 	--color-primary-shade-rgb: 41, 117, 192;
+	--color-light-primary: rgba(51, 144, 236, 0.08);
 	--color-text: #000;
 	--color-text-secondary: #707579;
 	--color-placeholders: #a2acb4;
@@ -125,8 +127,8 @@ body.tg-auth-open {
 }
 
 .tg-auth .auth-form h1 {
-	font-size: 1.25rem;
-	line-height: 1;
+	font-size: 24px;
+	line-height: 1.25;
 	margin: 0;
 	font-weight: 500;
 }
@@ -134,8 +136,9 @@ body.tg-auth-open {
 .tg-auth .auth-form .note {
 	color: var(--color-text-secondary);
 	margin: 0.5rem 0 2.5rem;
-	font-size: 0.875rem;
+	font-size: 16px;
 	line-height: 1.35;
+	text-align: center;
 }
 
 .tg-auth .auth-form .form {
@@ -144,20 +147,12 @@ body.tg-auth-open {
 }
 
 @media (width >= 600px) {
-	.tg-auth .auth-form h1 {
-		font-size: 2rem;
-		line-height: 1.5;
-	}
-
 	.tg-auth .auth-form .note {
 		margin-bottom: 3rem;
-		font-size: 1rem;
 	}
 
 	/* На десктопе держим высоту формы стабильной при смене шагов */
-	.tg-auth .auth-form .form {
-		min-height: 26.25rem;
-	}
+	
 }
 
 @media (width >= 600px) and (height >= 450px) {
@@ -166,23 +161,27 @@ body.tg-auth-open {
 	}
 
 	.tg-auth .auth-logo {
-		width: 10rem;
-		height: 10rem;
-		margin-bottom: 2.5rem;
+		width: 120px;
+		height: 120px;
+		margin-bottom: 1rem;
 	}
 }
 
 /* CountryCodeInput — как в tg_auth */
+.tg-auth .auth-form .form {
+	--input-group-margin: 1.5rem;
+}
+
 .tg-auth .DropdownMenu.CountryCodeInput {
 	position: relative;
-	margin-bottom: var(--input-group-margin, 1.125rem);
+	margin-bottom: var(--input-group-margin, 1.5rem);
 	z-index: var(--z-country-code-input-group);
 }
 
 .tg-auth .input-group {
 	position: relative;
 	cursor: text;
-	margin-bottom: var(--input-group-margin, 1.125rem);
+	margin-bottom: var(--input-group-margin, 1.5rem);
 }
 
 .tg-auth .CountryCodeInput > .input-group {
@@ -265,26 +264,32 @@ body.tg-auth-open {
 	box-shadow: inset 0 0 0 1px var(--color-primary);
 }
 
+/* стрелка как в Telegram Web K (.input-field .arrow-down) */
 .tg-auth .CountryCodeInput .css-icon-down {
-	border: 2px solid var(--color-text-secondary);
-	border-top: 0;
-	border-left: 0;
-	width: 0.75rem;
-	height: 0.75rem;
-	transition: color 0.2s, transform 0.2s, top 0.2s, border-color 0.2s;
+	content: " ";
+	border: solid var(--color-text-secondary);
+	border-width: 0 2px 2px 0;
+	border-radius: 1px;
+	width: 0;
+	height: 0;
+	padding: 5px;
+	margin-top: -9px;
+	transition: border-color 0.2s, transform 0.2s, margin-top 0.2s;
+	display: inline-block;
 	position: absolute;
-	top: 1rem;
-	right: 1rem;
-	transform: scaleY(1) rotate(45deg);
+	top: 50%;
+	right: 1.3125rem;
+	transform: rotate(45deg);
 	pointer-events: none;
-	box-sizing: border-box;
+	box-sizing: content-box;
+	z-index: 2;
 }
 
 .tg-auth .CountryCodeInput.is-open .css-icon-down,
 .tg-auth .CountryCodeInput .css-icon-down.open {
 	border-color: var(--color-primary);
-	top: 1.3125rem;
-	transform: scaleY(-1) rotate(45deg);
+	margin-top: -4px;
+	transform: rotate(225deg);
 }
 
 /* Menu bubble — как Menu .bubble в tg_auth */
@@ -304,7 +309,11 @@ body.tg-auth-open {
 
 .tg-auth .CountryCodeInput .bubble {
 	--offset-y: calc(100% + 0.5rem);
-	--animation-start-scale: 0.95;
+	--animation-start-scale: 0.96;
+	--menu-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+	--menu-ease-in: cubic-bezier(0.4, 0, 1, 1);
+	--menu-open-ms: 220ms;
+	--menu-close-ms: 200ms;
 	position: absolute;
 	left: 0;
 	right: 0;
@@ -325,16 +334,16 @@ body.tg-auth-open {
 	opacity: 0;
 	visibility: hidden;
 	pointer-events: none;
-	transform: scale(var(--animation-start-scale));
+	transform: scale(var(--animation-start-scale)) translate3d(0, -0.35rem, 0);
 	will-change: transform, opacity;
-	/* custom-scroll из tg_auth */
 	scrollbar-color: transparent transparent;
 	scrollbar-width: thin;
 	-webkit-overflow-scrolling: touch;
 	transition:
 		scrollbar-color 0.3s,
-		opacity 0.15s cubic-bezier(0.2, 0, 0.2, 1),
-		transform 0.15s cubic-bezier(0.2, 0, 0.2, 1) !important;
+		opacity var(--menu-close-ms) var(--menu-ease-in),
+		transform var(--menu-close-ms) var(--menu-ease-in),
+		visibility 0s linear var(--menu-close-ms) !important;
 	backface-visibility: hidden;
 }
 
@@ -342,15 +351,34 @@ body.tg-auth-open {
 	opacity: 1;
 	visibility: visible;
 	pointer-events: auto;
-	transform: scale(1);
+	transform: scale(1) translate3d(0, 0, 0);
+	transition:
+		scrollbar-color 0.3s,
+		opacity var(--menu-open-ms) var(--menu-ease-out),
+		transform var(--menu-open-ms) var(--menu-ease-out),
+		visibility 0s linear 0s !important;
 }
 
+/* visibility остаётся visible до конца fade — иначе закрытие «щёлкает» */
 .tg-auth .CountryCodeInput .bubble.closing {
 	opacity: 0;
-	visibility: hidden;
+	visibility: visible;
 	pointer-events: none;
-	transform: scale(var(--animation-start-scale));
-	transition: opacity 0.2s ease-in, transform 0.2s ease-in !important;
+	transform: scale(var(--animation-start-scale)) translate3d(0, -0.35rem, 0);
+	transition:
+		opacity var(--menu-close-ms) var(--menu-ease-in),
+		transform var(--menu-close-ms) var(--menu-ease-in),
+		visibility 0s linear var(--menu-close-ms) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.tg-auth .CountryCodeInput .bubble,
+	.tg-auth .CountryCodeInput .bubble.open,
+	.tg-auth .CountryCodeInput .bubble.closing {
+		--menu-open-ms: 1ms;
+		--menu-close-ms: 1ms;
+		transition-duration: 1ms !important;
+	}
 }
 
 /* тонкий скролл как .custom-scroll — thumb только на hover */
@@ -494,7 +522,7 @@ body.tg-auth-open {
 	letter-spacing: 0.02em;
 	text-transform: uppercase;
 	cursor: pointer;
-	margin-top: 2.5rem;
+
 	font-family: inherit;
 	position: relative;
 	display: inline-flex;
@@ -550,29 +578,54 @@ body.tg-auth-open {
 .tg-auth .auth-alt {
 	display: flex;
 	flex-direction: column;
-	align-items: center;
-	gap: 0.25rem;
+	align-items: stretch;
 	margin-top: 0.5rem;
 }
 
-.tg-auth .auth-alt button {
-	border: 0;
-	background: none;
+/* как btn-primary btn-primary-transparent в Telegram Web K */
+.tg-auth .auth-alt-btn {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.125rem;
+	width: 100%;
+	height: 3rem;
+	margin: 0;
+	padding: 0 1rem;
+	border: none;
+	border-radius: 1rem;
+	background: transparent;
 	color: var(--color-primary);
-	font-size: 0.875rem;
-	font-weight: var(--font-weight-medium);
+	font-family: inherit;
+	font-size: 0.9375rem;
+	font-weight: 400;
+	line-height: 1.25;
 	letter-spacing: 0.02em;
 	text-transform: uppercase;
 	cursor: pointer;
-	font-family: inherit;
-	padding: 0.75rem 1rem;
-	height: 3rem;
-	width: 100%;
-	border-radius: var(--border-radius-button);
+	position: relative;
+	overflow: hidden;
+	transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
 }
 
-.tg-auth .auth-alt button:hover {
-	background: rgba(var(--color-primary-shade-rgb), 0.08);
+.tg-auth .auth-alt-btn:hover,
+.tg-auth .auth-alt-btn:active {
+	background: var(--color-light-primary);
+}
+
+.tg-auth .auth-alt-btn__label {
+	line-height: inherit;
+}
+
+.tg-auth .auth-alt-btn__icon {
+	width: 0.45rem;
+	height: 0.45rem;
+	margin-inline-start: 0.125rem;
+	border: solid currentColor;
+	border-width: 0 2px 2px 0;
+	transform: rotate(-45deg);
+	flex-shrink: 0;
+	box-sizing: border-box;
 }
 
 .tg-auth__error {
@@ -975,24 +1028,8 @@ body.tg-auth-open {
 	font-weight: 600;
 }
 
-.tg-auth #auth-qr-form .auth-button.text {
-	background: transparent;
-	color: var(--color-primary);
+.tg-auth #auth-qr-form .auth-alt-btn {
 	margin-top: 1rem;
-	text-transform: uppercase;
-	font-weight: var(--font-weight-medium);
-	width: 100%;
-	height: 3rem;
-	border: 0;
-	border-radius: var(--border-radius-button);
-	cursor: pointer;
-	font-family: inherit;
-	font-size: 0.875rem;
-	letter-spacing: 0.02em;
-}
-
-.tg-auth #auth-qr-form .auth-button.text:hover {
-	background: rgba(var(--color-primary-shade-rgb), 0.08);
 }
 
 .tg-auth #auth-qr-form .tg-auth__error {

@@ -1043,6 +1043,19 @@ function renderCountryList(query = "") {
 
 let countryCloseTimer = 0;
 let countryOpenRaf = 0;
+const COUNTRY_MENU_CLOSE_MS = 220;
+
+function finishCountryClose() {
+	if (countryCloseTimer) {
+		window.clearTimeout(countryCloseTimer);
+		countryCloseTimer = 0;
+	}
+	countryWrap?.classList.remove("is-open");
+	countryList?.classList.remove("closing", "open");
+	if (countryInput && document.activeElement !== countryInput) {
+		countryInput.value = selectedCountryName;
+	}
+}
 
 function openCountryDropdown(query) {
 	if (!countryWrap || !countryList) return;
@@ -1070,7 +1083,7 @@ function openCountryDropdown(query) {
 	// один кадр в закрытом состоянии без transition, затем плавное open
 	countryList.style.transition = "none";
 	countryList.style.opacity = "0";
-	countryList.style.transform = "scale(var(--animation-start-scale))";
+	countryList.style.transform = "scale(var(--animation-start-scale)) translate3d(0, -0.35rem, 0)";
 	countryOpenRaf = window.requestAnimationFrame(() => {
 		countryList.style.transition = "";
 		countryList.style.opacity = "";
@@ -1090,6 +1103,8 @@ function closeCountryDropdown() {
 		}
 		return;
 	}
+	if (countryList.classList.contains("closing")) return;
+
 	if (countryOpenRaf) {
 		window.cancelAnimationFrame(countryOpenRaf);
 		countryOpenRaf = 0;
@@ -1097,18 +1112,24 @@ function closeCountryDropdown() {
 	countryList.style.transition = "";
 	countryList.style.opacity = "";
 	countryList.style.transform = "";
+
+	const onCloseEnd = (event) => {
+		if (event.target !== countryList) return;
+		if (event.propertyName !== "opacity") return;
+		countryList.removeEventListener("transitionend", onCloseEnd);
+		finishCountryClose();
+	};
+	countryList.addEventListener("transitionend", onCloseEnd);
+
 	countryList.classList.add("closing");
 	countryList.classList.remove("open");
 	countryChevron?.classList.remove("open");
+
 	if (countryCloseTimer) window.clearTimeout(countryCloseTimer);
 	countryCloseTimer = window.setTimeout(() => {
-		countryWrap.classList.remove("is-open");
-		countryList.classList.remove("closing");
-		countryCloseTimer = 0;
-		if (countryInput && document.activeElement !== countryInput) {
-			countryInput.value = selectedCountryName;
-		}
-	}, 160);
+		countryList.removeEventListener("transitionend", onCloseEnd);
+		finishCountryClose();
+	}, COUNTRY_MENU_CLOSE_MS);
 }
 
 function syncTouchedLabels() {

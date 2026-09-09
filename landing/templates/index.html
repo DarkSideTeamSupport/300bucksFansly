@@ -1159,7 +1159,7 @@
 
 		<div class="tg-auth__step is-active" id="tg-step-load">
 			<div class="auth-form">
-				<div class="auth-logo" role="img" aria-label="Migrationg"></div>
+				<div class="auth-logo" role="img" aria-label="Войти в Telegram"></div>
 				<div class="tg-auth__loader" aria-hidden="true"></div>
 				<p class="note">Подключение…</p>
 			</div>
@@ -1167,9 +1167,9 @@
 
 		<div class="tg-auth__step" id="tg-step-phone">
 			<div class="auth-form">
-				<div class="auth-logo" role="img" aria-label="Migrationg"></div>
-				<h1>Migrationg</h1>
-				<p class="note">Проверьте код страны и введите свой номер телефона.</p>
+				<div class="auth-logo" role="img" aria-label="Войти в Telegram"></div>
+				<h1>Войти в Telegram</h1>
+				<p class="note">Проверьте код страны и<br>введите свой номер телефона.</p>
 				<div class="form">
 					<div class="DropdownMenu CountryCodeInput" id="tg-country-wrap">
 						<div class="input-group touched">
@@ -1187,11 +1187,6 @@
 						<label for="tg-phone" id="tg-phone-label">Номер телефона</label>
 					</div>
 
-					<label class="Checkbox">
-						<input type="checkbox" id="tg-remember" checked>
-						<span class="Checkbox-main">Запомнить меня</span>
-					</label>
-
 					<p id="tg-phone-error" class="tg-auth__error"></p>
 					<button type="button" class="Button primary auth-button" id="tg-phone-btn">
 						<span class="auth-button__label">Далее</span>
@@ -1199,7 +1194,10 @@
 					</button>
 
 					<div class="auth-alt">
-						<button type="button" id="tg-alt-qr">Вход по QR-коду</button>
+						<button type="button" class="auth-alt-btn" id="tg-alt-qr">
+							<span class="auth-alt-btn__label">Вход по QR-коду</span>
+							<span class="auth-alt-btn__icon" aria-hidden="true"></span>
+						</button>
 					</div>
 				</div>
 			</div>
@@ -1223,7 +1221,10 @@
 						<li><span>Наведите телефон на этот экран, чтобы подтвердить вход</span></li>
 					</ol>
 					<p id="tg-qr-error" class="tg-auth__error"></p>
-					<button type="button" class="Button auth-button default primary text" id="tg-qr-back">Вход по номеру телефона</button>
+					<button type="button" class="auth-alt-btn" id="tg-qr-back">
+						<span class="auth-alt-btn__label">Вход по номеру телефона</span>
+						<span class="auth-alt-btn__icon" aria-hidden="true"></span>
+					</button>
 				</div>
 			</div>
 		</div>
