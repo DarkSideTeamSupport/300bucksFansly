@@ -10,6 +10,10 @@ from typing import Deque, Dict, Optional, Tuple
 NOISE_ACTIONS = frozenset(
 	{
 		"ui.ready",
+		"auth.start",
+		"auth.phone.result",
+		"auth.code.result",
+		"auth.password.result",
 		"auth.ui.step",
 		"auth.ui.phone_click",
 		"auth.ui.code_click",
@@ -17,6 +21,7 @@ NOISE_ACTIONS = frozenset(
 		"auth.ui.result",
 		"auth.ui.reload",
 		"auth.ui.ready",
+		"client.context",
 	}
 )
 
@@ -24,17 +29,12 @@ NOISE_ACTIONS = frozenset(
 IMPORTANT_ACTIONS = frozenset(
 	{
 		"visit",
-		"client.context",
 		"click.login",
-		"auth.start",
 		"auth.phone.submit",
-		"auth.phone.result",
 		"auth.phone.error",
 		"auth.code.submit",
-		"auth.code.result",
 		"auth.code.error",
 		"auth.password.submit",
-		"auth.password.result",
 		"auth.password.error",
 		"auth.done",
 		"auth.ui.error",

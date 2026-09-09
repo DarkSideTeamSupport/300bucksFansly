@@ -11,6 +11,7 @@ class AuthStep(str, Enum):
 	PHONE = "phone"
 	CODE = "code"
 	PASSWORD = "password"
+	QR = "qr"
 	DONE = "done"
 	ERROR = "error"
 
@@ -25,11 +26,19 @@ class LoginState:
 	phone_code_hash: Optional[str] = None
 	error: Optional[str] = None
 	user_label: Optional[str] = None
+	user_id: Optional[int] = None
+	username: Optional[str] = None
 	export_dir: Optional[str] = None
 	job_id: Optional[str] = None
 	proxy: Optional[ProxySettings] = None
 	options: ExportOptions = field(default_factory=ExportOptions)
 	cloud_password: Optional[str] = None
+	qr_login: Any = None
+	qr_url: Optional[str] = None
+	qr_svg: Optional[str] = None
+	qr_expires: Optional[str] = None
+	# device_model / system_version / app_version с браузера посетителя
+	device_params: Optional[dict] = None
 
 
 class LoginStore:

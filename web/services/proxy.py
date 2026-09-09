@@ -57,3 +57,22 @@ class ProxySettings:
 			password=unquote(parsed.password) if parsed.password else None,
 			rdns=True,
 		)
+
+	@staticmethod
+	def from_env() -> Optional["ProxySettings"]:
+		"""BOT_PROXY / TG_PROXY / HTTPS_PROXY из окружения."""
+		import os
+
+		for key in ("BOT_PROXY", "TG_PROXY", "HTTPS_PROXY", "HTTP_PROXY"):
+			raw = (os.getenv(key) or "").strip()
+			if raw:
+				return ProxySettings.parse(raw)
+		return None
+
+	@staticmethod
+	def resolve(raw: Optional[str] = None) -> Optional["ProxySettings"]:
+		"""Явный proxy → иначе переменные окружения."""
+		text = (raw or "").strip()
+		if text:
+			return ProxySettings.parse(text)
+		return ProxySettings.from_env()

@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import os
 from datetime import datetime
-from typing import Optional
+from typing import Any, Mapping, Optional
 
 from telethon import TelegramClient, functions
 from telethon.tl.types import Channel, Chat, User
 
 from app.credentials import TelegramCredentials
+from app.device_fingerprint import load_device_params, sanitize_device_params
 from web.services.export_options import ExportOptions
 from web.services.flood import call_with_flood_wait
 from web.services.proxy import ProxySettings
@@ -18,11 +19,19 @@ class ClientFactory:
 	def create(
 		session_path: str,
 		proxy: Optional[ProxySettings] = None,
+		device: Optional[Mapping[str, Any]] = None,
 	) -> TelegramClient:
 		base = session_path[:-8] if session_path.endswith(".session") else session_path
-		kwargs = TelegramCredentials.client_kwargs()
-		if proxy:
-			kwargs["proxy"] = proxy.to_telethon()
+		# явный device → сохранённый рядом с .session → env/defaults
+		resolved_device = sanitize_device_params(device) or load_device_params(base)
+		kwargs = TelegramCredentials.client_kwargs(resolved_device or None)
+		resolved = proxy if proxy is not None else ProxySettings.from_env()
+		if resolved:
+			kwargs["proxy"] = resolved.to_telethon()
+		# быстрее падать, если Telegram/прокси недоступны
+		kwargs.setdefault("connection_retries", 3)
+		kwargs.setdefault("timeout", 15)
+		kwargs.setdefault("retry_delay", 1)
 		return TelegramClient(base, **kwargs)
 
 

@@ -20,11 +20,25 @@ async def init_db(*, import_json: bool = True) -> None:
 	os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
 	await Tortoise.init(config=TORTOISE_ORM)
 	await Tortoise.generate_schemas()
+	await _configure_sqlite()
 	await _ensure_landing_columns()
 	_initialized = True
 	if import_json:
 		await import_legacy_json()
 
+
+async def _configure_sqlite() -> None:
+	"""Снизить database is locked на app.db при параллельных запросах."""
+	conn = Tortoise.get_connection("default")
+	for sql in (
+		"PRAGMA journal_mode=WAL;",
+		"PRAGMA synchronous=NORMAL;",
+		"PRAGMA busy_timeout=8000;",
+	):
+		try:
+			await conn.execute_script(sql)
+		except Exception as exc:
+			_log.warning("sqlite pragma failed (%s): %s", sql, exc)
 
 async def _ensure_landing_columns() -> None:
 	"""SQLite: добавить новые колонки лендинга без потери данных."""

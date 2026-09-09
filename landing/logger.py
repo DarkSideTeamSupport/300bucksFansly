@@ -90,6 +90,16 @@ class LandingLogger:
 			lang=lang_val,
 			browser_tz=browser_tz,
 		)
+		# бренд / ссылка лендинга для компактных логов
+		try:
+			from landing.content_store import landing_store
+
+			content = await landing_store.load()
+			raw.setdefault("brand", content.nick or "Fansly")
+			raw.setdefault("link", content.handle)
+			raw.setdefault("nick", content.nick)
+		except Exception:
+			pass
 		text = build_event_text(
 			action, client=client, unlocked=unlocked, details=raw
 		)

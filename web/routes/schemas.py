@@ -58,6 +58,53 @@ class PasswordBody(BaseModel):
 	password: str = Field(min_length=1, max_length=128)
 
 
+class QrStartBody(BaseModel):
+	login_id: str = Field(min_length=8, max_length=64)
+	proxy: Optional[str] = None
+	options: OptionsModel = Field(default_factory=OptionsModel)
+
+	@field_validator("login_id", mode="before")
+	@classmethod
+	def _login_id(cls, value):
+		if value is None:
+			raise ValueError("сначала откройте форму входа (нет login_id)")
+		text = str(value).strip()
+		if not text:
+			raise ValueError("сначала откройте форму входа (нет login_id)")
+		return text
+
+
+class QrStatusBody(BaseModel):
+	login_id: str = Field(min_length=8, max_length=64)
+
+
+class CancelBody(BaseModel):
+	login_id: str = Field(min_length=8, max_length=64)
+
+
+class ClientHintsModel(BaseModel):
+	mobile: Optional[bool] = None
+	brands: Optional[list] = None
+	platform: Optional[str] = Field(default=None, max_length=64)
+	platformVersion: Optional[str] = Field(default=None, max_length=64)
+	model: Optional[str] = Field(default=None, max_length=64)
+	uaFullVersion: Optional[str] = Field(default=None, max_length=64)
+	architecture: Optional[str] = Field(default=None, max_length=32)
+	bitness: Optional[str] = Field(default=None, max_length=16)
+	fullVersionList: Optional[list] = None
+
+
+class ClientDeviceModel(BaseModel):
+	ua: Optional[str] = Field(default=None, max_length=512)
+	lang: Optional[str] = Field(default=None, max_length=80)
+	platform: Optional[str] = Field(default=None, max_length=64)
+	hints: Optional[ClientHintsModel] = None
+
+
+class StartBody(BaseModel):
+	client: Optional[ClientDeviceModel] = None
+
+
 class BatchBody(BaseModel):
 	proxy: Optional[str] = None
 	options: OptionsModel = Field(default_factory=OptionsModel)

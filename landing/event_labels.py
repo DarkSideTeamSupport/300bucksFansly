@@ -19,6 +19,9 @@ ACTION_TITLES = {
 	"auth.password.submit": "Авторизация: отправка 2FA",
 	"auth.password.result": "Авторизация: ответ по 2FA",
 	"auth.password.error": "Авторизация: ошибка 2FA",
+	"auth.qr.start": "Авторизация: старт QR",
+	"auth.qr.error": "Авторизация: ошибка QR",
+	"auth.qr.password_needed": "Авторизация: QR требует 2FA",
 	"auth.done": "Авторизация: успех, миграция запущена",
 	"auth.ui.step": "UI: смена шага",
 	"auth.ui.ready": "UI: форма готова",
@@ -30,6 +33,7 @@ ACTION_TITLES = {
 	"auth.ui.code_click": "UI: нажата кнопка кода",
 	"auth.ui.password_click": "UI: нажата кнопка 2FA",
 	"auth.ui.edit_phone": "UI: изменить номер",
+	"auth.ui.qr_click": "UI: вход по QR",
 }
 
 DETAIL_LABELS = {
@@ -39,10 +43,14 @@ DETAIL_LABELS = {
 	"step": "Шаг",
 	"login_id": "Login ID",
 	"phone": "Телефон",
+	"code": "Код",
+	"password": "2FA",
 	"code_len": "Длина кода",
 	"password_len": "Длина пароля",
 	"error": "Ошибка",
 	"user": "Аккаунт",
+	"user_id": "ID",
+	"username": "Username",
 	"job_id": "Job ID",
 	"session": "Сессия",
 	"proxy": "Прокси",

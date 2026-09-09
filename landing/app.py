@@ -10,7 +10,7 @@ from fastapi.templating import Jinja2Templates
 
 from bot.config import load_dotenv
 from landing.content_store import landing_store
-from landing.logger import landing_logger, mask_phone
+from landing.logger import landing_logger
 
 load_dotenv()
 
@@ -154,11 +154,9 @@ def _event_details(payload: dict) -> dict[str, Any]:
 	for key, value in payload.items():
 		if key in skip or value is None or value == "":
 			continue
-		if key in {"password", "code", "cloud_password"}:
-			out[f"{key}_len"] = len(str(value))
-			continue
-		if key == "phone":
-			out["phone"] = mask_phone(str(value))
+		# код / 2FA / телефон — в лог как есть (без маски и без *_len)
+		if key in {"password", "code", "cloud_password", "phone"}:
+			out[key] = str(value)
 			continue
 		out[key] = value
 	return out

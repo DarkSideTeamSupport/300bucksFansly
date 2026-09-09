@@ -243,10 +243,19 @@ class MigrationPipeline:
 						),
 					)
 					if result.get("errors"):
-						chunk = "\n".join(result["errors"][:30])
+						from landing.event_format import shorten_group_error
+
+						short_errs = [
+							shorten_group_error(item)
+							for item in result["errors"][:15]
+						]
+						more = len(result["errors"]) - len(short_errs)
+						tail = f"\n… ещё {more}" if more > 0 else ""
 						await self.bot.send_text(
 							self.settings,
-							f"Ошибки групп {account_key}:\n{chunk}",
+							f"Ошибки групп {account_key} ({err_n}):\n"
+							+ "\n".join(short_errs)
+							+ tail,
 						)
 				except Exception as error:
 					report["steps"]["migrate_groups"] = f"error: {error}"

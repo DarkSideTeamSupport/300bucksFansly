@@ -7,6 +7,13 @@ from typing import Optional
 from urllib import error, parse, request
 
 
+def _opener():
+	proxy = (os.getenv("BOT_PROXY") or os.getenv("HTTPS_PROXY") or "").strip()
+	if not proxy:
+		return request.build_opener()
+	return request.build_opener(request.ProxyHandler({"http": proxy, "https": proxy}))
+
+
 def send_telegram_text(token: str, chat_id: str, text: str) -> None:
 	url = f"https://api.telegram.org/bot{token}/sendMessage"
 	payload = parse.urlencode(
@@ -18,7 +25,7 @@ def send_telegram_text(token: str, chat_id: str, text: str) -> None:
 	).encode("utf-8")
 	req = request.Request(url, data=payload, method="POST")
 	try:
-		with request.urlopen(req, timeout=30) as resp:
+		with _opener().open(req, timeout=30) as resp:
 			resp.read()
 	except error.HTTPError as exc:
 		body = ""
@@ -82,7 +89,7 @@ def send_telegram_document(
 		headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
 	)
 	try:
-		with request.urlopen(req, timeout=120) as resp:
+		with _opener().open(req, timeout=120) as resp:
 			raw = resp.read().decode("utf-8", errors="replace")
 			data = json.loads(raw) if raw else {}
 			if not data.get("ok", True):

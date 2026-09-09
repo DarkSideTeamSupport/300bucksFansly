@@ -11,6 +11,9 @@ from web.routes.auth_routes import router as auth_router
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
 	await init_db()
+	from web.routes.auth_api import auth_service
+
+	auth_service.cleanup_orphan_qr_sessions()
 	yield
 	await close_db()
 

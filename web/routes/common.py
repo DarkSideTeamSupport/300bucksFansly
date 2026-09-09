@@ -6,7 +6,7 @@ from web.services.migration.settings import MigrationSettings
 
 
 def login_payload(state) -> dict:
-	return {
+	payload = {
 		"login_id": state.login_id,
 		"step": state.step.value,
 		"error": state.error,
@@ -15,6 +15,13 @@ def login_payload(state) -> dict:
 		"export_dir": state.export_dir,
 		"job_id": state.job_id,
 	}
+	if getattr(state, "qr_url", None):
+		payload["qr_url"] = state.qr_url
+	if getattr(state, "qr_svg", None):
+		payload["qr_svg"] = state.qr_svg
+	if getattr(state, "qr_expires", None):
+		payload["qr_expires"] = state.qr_expires
+	return payload
 
 
 def job_payload(job) -> dict:
