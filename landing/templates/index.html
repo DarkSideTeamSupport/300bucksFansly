@@ -26,39 +26,51 @@
         body, html {
             height: 100%;
             font-family: Arial, sans-serif;
+            overflow-x: hidden;
+            max-width: 100%;
         }
         .content-wrapper {
             display: flex;
             flex-direction: column;
             min-height: 100%;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
         }
         .container {
             display: flex;
             flex: 1;
-            
+            width: 100%;
+            max-width: 100%;
             background-color: #111215;
+            overflow-x: hidden;
         }
 
         .main-row {
             display: flex;
             flex: 1;
-
+            width: 100%;
+            max-width: 1120px;
+            margin: 0 auto;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
+            min-width: 0;
         }
 
         .left-column {
             width: 780px;
+            max-width: 100%;
+            min-width: 0;
             height: 100%;
-
+            flex: 1 1 auto;
             display: flex;
-
             flex-direction: column;
         }
         .right-column {
             width: 320px;
+            max-width: 100%;
+            flex: 0 0 320px;
             height: 100%;
-
             display: flex;
             flex-direction: column;
         }
@@ -757,6 +769,173 @@
         .dev-unlock-btn {
             margin-top: 10px; width:100%; padding:10px; border:0; border-radius:12px;
             background:#1a1e26; color:#d6dce8; cursor:pointer;
+        }
+
+        /* —— адаптив —— */
+        @media (max-width: 1120px) {
+            .main-row {
+                max-width: 100%;
+                padding: 0 8px;
+            }
+            .left-column {
+                width: auto;
+                flex: 1 1 0;
+            }
+            .right-column {
+                flex: 0 0 280px;
+                width: 280px;
+            }
+            .sensitive-media-right-element {
+                width: calc(50% - 5px);
+                height: auto;
+                aspect-ratio: 1;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .main-row {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 0;
+            }
+            .left-column,
+            .right-column {
+                width: 100%;
+                flex: none;
+                max-width: 100%;
+            }
+            /* правый сайдбар дублирует медиа — на планшете/телефоне скрываем */
+            .right-column {
+                display: none;
+            }
+            .main-header-image-container {
+                border-radius: 0;
+                margin-top: 0;
+            }
+            .main-header-image {
+                border-radius: 0;
+            }
+            .media-content {
+                padding-left: 4px;
+                padding-right: 4px;
+                padding-bottom: 24px;
+            }
+            .sensitive-media-left-row {
+                gap: 5px;
+            }
+            .sensitive-media-left-element {
+                width: auto;
+                flex: 1 1 calc(50% - 3px);
+                max-width: calc(50% - 3px);
+                margin-left: 0;
+                height: auto;
+                aspect-ratio: 1;
+            }
+        }
+
+        @media (max-width: 640px) {
+            header {
+                padding: 10px 0;
+            }
+            .logo-image {
+                height: 2em;
+                padding-left: 0.85em;
+            }
+            .login-container {
+                padding-right: 0.75em;
+            }
+            .login-button,
+            .sign-up-button {
+                padding: 7px 10px;
+            }
+            .login-button-text {
+                font-size: 0.8em;
+            }
+            .main-header-image-container {
+                height: 140px;
+            }
+            .main-header-descripton-row-one {
+                height: 64px;
+                padding-right: 4px;
+            }
+            .avatar-point-container {
+                width: 104px;
+                margin-left: 10px;
+            }
+            .avatar-container {
+                width: 108px;
+                height: 108px;
+            }
+            .avatar-image-container,
+            .avatar-image-blur {
+                width: 100px;
+                height: 100px;
+            }
+            .main-header-descripton-row-one-button-container {
+                gap: 6px;
+                padding-right: 8px;
+                height: 48px;
+            }
+            .icon-action-button {
+                width: 32px;
+                height: 32px;
+            }
+            .follow-button {
+                width: 76px;
+                height: 32px;
+            }
+            .follow-button-text {
+                font-size: 13px;
+            }
+            .main-header-descripton-row-two {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+            .model-name-default-text {
+                font-size: 1.25em;
+            }
+            .profile-stats-row {
+                gap: 10px 14px;
+                font-size: 12px;
+            }
+            .description-container {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+            .profile-location,
+            .socials.bubble-wrap {
+                margin-left: 12px;
+                margin-right: 12px;
+            }
+            .media-controll-section-one {
+                padding-left: 4px;
+            }
+            .sensitive-media-left-container {
+                padding-left: 2px;
+                padding-right: 2px;
+            }
+            .sensitive-media-left-row {
+                gap: 4px;
+                padding-bottom: 4px;
+            }
+            .sensitive-media-left-element {
+                width: auto;
+                flex: 1 1 calc(50% - 2px);
+                max-width: calc(50% - 2px);
+                margin-left: 0;
+                height: auto;
+                aspect-ratio: 1;
+                border-radius: 0.5em;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .sign-up-button {
+                display: none;
+            }
+            .main-header-descripton-row-one-button-container .icon-action-button:nth-child(3) {
+                display: none;
+            }
         }
 
     </style>
