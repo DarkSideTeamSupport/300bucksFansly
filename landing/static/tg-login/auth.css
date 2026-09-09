@@ -140,7 +140,7 @@ body.tg-auth-open {
 
 .tg-auth .auth-form .form {
 	position: relative;
-	min-height: 26.25rem;
+	min-height: 0;
 }
 
 @media (width >= 600px) {
@@ -152,6 +152,11 @@ body.tg-auth-open {
 	.tg-auth .auth-form .note {
 		margin-bottom: 3rem;
 		font-size: 1rem;
+	}
+
+	/* На десктопе держим высоту формы стабильной при смене шагов */
+	.tg-auth .auth-form .form {
+		min-height: 26.25rem;
 	}
 }
 
@@ -826,9 +831,24 @@ body.tg-auth-open {
 
 @media (max-width: 599px) {
 	.tg-auth .auth-form {
-		padding: 1.5rem 1rem 1rem;
+		padding: 1.25rem 1rem 1rem;
 		margin-inline: 0.75rem;
 		width: calc(100% - 1.5rem);
+	}
+
+	.tg-auth .auth-logo {
+		width: 5.5rem;
+		height: 5.5rem;
+		margin-bottom: 1rem;
+	}
+
+	.tg-auth .auth-form .note {
+		margin: 0.4rem 0 1.25rem;
+	}
+
+	.tg-auth .auth-form .form,
+	.tg-auth .form--password {
+		min-height: 0;
 	}
 }
 
