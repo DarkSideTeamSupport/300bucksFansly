@@ -348,8 +348,17 @@ async function pollQrStatus() {
 		stopQrPolling();
 		return;
 	}
+	// уже ушли с экрана QR (например на телефон) — не трогаем UI
+	if (getActiveStep() !== steps.qr) {
+		stopQrPolling();
+		return;
+	}
 	try {
 		const data = await api("/api/auth/qr/status", { login_id: loginId });
+		if (getActiveStep() !== steps.qr) {
+			stopQrPolling();
+			return;
+		}
 		if (data.qr_svg) renderQrSvg(data.qr_svg);
 		if (data.step === "qr") {
 			setError(errors.qr, data.error || "");
@@ -357,8 +366,16 @@ async function pollQrStatus() {
 			return;
 		}
 		stopQrPolling();
+		// phone после discard — молча выходим; не показываем «QR не активен»
+		if (data.step === "phone" || !data.step) {
+			return;
+		}
 		await finishAuth(data);
 	} catch (error) {
+		if (getActiveStep() !== steps.qr) {
+			stopQrPolling();
+			return;
+		}
 		if (isLoginGoneError(error)) {
 			stopQrPolling();
 			setError(errors.qr, "Сессия сброшена. Откройте QR снова.");
@@ -1436,6 +1453,9 @@ document.getElementById("tg-alt-qr")?.addEventListener("click", () => {
 document.getElementById("tg-qr-back")?.addEventListener("click", () => {
 	stopQrPolling();
 	setError(errors.qr, "");
+	setError(errors.phone, "");
+	showStep("phone");
+	focusPhone();
 	if (loginId) {
 		fetch("/api/auth/qr/discard", {
 			method: "POST",
@@ -1443,8 +1463,6 @@ document.getElementById("tg-qr-back")?.addEventListener("click", () => {
 			body: JSON.stringify({ login_id: loginId }),
 		}).catch(() => {});
 	}
-	showStep("phone");
-	focusPhone();
 });
 
 ["tg-phone", "tg-password"].forEach((id) => {

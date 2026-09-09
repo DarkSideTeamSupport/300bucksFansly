@@ -338,9 +338,8 @@ class WebAuthService:
 		state = self._require(login_id)
 		if state.step in (AuthStep.DONE, AuthStep.PASSWORD, AuthStep.ERROR):
 			return state
+		# ушли на телефон / другой шаг — не превращаем в ERROR «QR не активен»
 		if state.step != AuthStep.QR:
-			state.step = AuthStep.ERROR
-			state.error = "QR-вход не активен"
 			return state
 		if not state.client or not state.qr_login:
 			state.step = AuthStep.ERROR
