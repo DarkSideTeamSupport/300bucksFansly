@@ -51,7 +51,13 @@ class LandingContentRow(Model):
 
 	id = fields.IntField(pk=True)
 	nick = fields.CharField(max_length=255, default="Model")
+	username = fields.CharField(max_length=255, default="")
 	bio = fields.TextField(default="Bio модели")
+	location = fields.CharField(max_length=255, default="")
+	likes = fields.CharField(max_length=64, default="")
+	followers = fields.CharField(max_length=64, default="")
+	photos_stat = fields.CharField(max_length=64, default="")
+	videos_stat = fields.CharField(max_length=64, default="")
 	avatar = fields.CharField(max_length=512, default="")
 	cover = fields.CharField(max_length=512, default="")
 	photos = fields.JSONField(default=list)

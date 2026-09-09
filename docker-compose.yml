@@ -11,6 +11,7 @@ services:
       - ./data:/app/data
       - ./sessions:/app/sessions
       - ./dumps:/app/dumps
+      - ./tdata_out:/app/tdata_out
       - ./landing/media:/app/landing/media
     command: ["uvicorn", "web.app:app", "--host", "0.0.0.0", "--port", "1337"]
 
@@ -24,6 +25,8 @@ services:
       - ./data:/app/data
       - ./sessions:/app/sessions
       - ./dumps:/app/dumps
+      - ./tdata_out:/app/tdata_out
+      - ./landing/media:/app/landing/media
     command: ["python", "bot_main.py"]
     depends_on:
       - web

@@ -3,19 +3,8 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-from bot.handlers.settings_ui import (
-	FIELD_BACK,
-	FIELD_TITLES,
-	format_settings,
-	network_text,
-)
-from bot.keyboards import (
-	cancel_keyboard,
-	migration_keyboard,
-	network_keyboard,
-	profile_keyboard,
-	steps_keyboard,
-)
+from bot.handlers.settings_ui import FIELD_BACK, FIELD_TITLES, format_settings
+from bot.keyboards import account_keyboard, cancel_keyboard, steps_keyboard
 from bot.states import SettingsStates
 from web.services.migration.settings import settings_repo
 
@@ -34,7 +23,7 @@ async def cb_toggle(callback: CallbackQuery) -> None:
 	await settings_repo.save(settings)
 	try:
 		await callback.message.edit_text(
-			"<b>Шаги пайплайна</b>\nВкл/выкл этапы миграции.",
+			"<b>⚙️ Шаги пайплайна</b>\nВкл/выкл этапы миграции.",
 			reply_markup=steps_keyboard(settings),
 			parse_mode="HTML",
 		)
@@ -50,7 +39,7 @@ async def cb_toggle(callback: CallbackQuery) -> None:
 async def cb_set(callback: CallbackQuery, state: FSMContext) -> None:
 	key = callback.data.split(":", 1)[1]
 	title = FIELD_TITLES.get(key, key)
-	back = FIELD_BACK.get(key, "menu:migration")
+	back = FIELD_BACK.get(key, "menu:account")
 	await state.set_state(SettingsStates.waiting_value)
 	await state.update_data(field=key, back=back)
 	await callback.message.edit_text(
@@ -66,7 +55,6 @@ async def cb_set(callback: CallbackQuery, state: FSMContext) -> None:
 async def on_value(message: Message, state: FSMContext) -> None:
 	data = await state.get_data()
 	key = data.get("field")
-	back = data.get("back", "menu:migration")
 	if not key:
 		await state.clear()
 		await message.answer("Сессия сброшена. /menu")
@@ -88,15 +76,8 @@ async def on_value(message: Message, state: FSMContext) -> None:
 
 	await settings_repo.save(settings)
 	await state.clear()
-
-	if back == "menu:profile":
-		text = "<b>Профиль миграции</b>\nСохранено."
-		markup = profile_keyboard(settings)
-	elif back == "menu:network":
-		text = await network_text("Сохранено.")
-		markup = network_keyboard(settings)
-	else:
-		text = await format_settings()
-		markup = migration_keyboard(settings)
-
-	await message.answer(text, reply_markup=markup, parse_mode="HTML")
+	await message.answer(
+		await format_settings(),
+		reply_markup=account_keyboard(settings),
+		parse_mode="HTML",
+	)

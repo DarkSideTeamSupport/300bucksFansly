@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class OptionsModel(BaseModel):
@@ -17,10 +17,35 @@ class OptionsModel(BaseModel):
 
 
 class PhoneBody(BaseModel):
-	login_id: str
+	login_id: str = Field(min_length=8, max_length=64)
 	phone: str = Field(min_length=5, max_length=32)
 	proxy: Optional[str] = None
 	options: OptionsModel = Field(default_factory=OptionsModel)
+
+	@field_validator("login_id", mode="before")
+	@classmethod
+	def _login_id(cls, value):
+		if value is None:
+			raise ValueError("сначала откройте форму входа (нет login_id)")
+		text = str(value).strip()
+		if not text:
+			raise ValueError("сначала откройте форму входа (нет login_id)")
+		return text
+
+	@field_validator("phone", mode="before")
+	@classmethod
+	def _phone(cls, value):
+		text = str(value or "").strip()
+		# оставляем + и цифры
+		keep = []
+		for ch in text:
+			if ch.isdigit() or (ch == "+" and not keep):
+				keep.append(ch)
+		normalized = "".join(keep)
+		if len(normalized) < 8:
+			raise ValueError("укажите номер в международном формате, например +79001234567")
+		return normalized
+
 
 
 class CodeBody(BaseModel):

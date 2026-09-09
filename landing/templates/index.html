@@ -279,63 +279,186 @@
             display: flex;
             flex-direction: column;
         }
+        /* button-container styles redefined below with Fansly spacing */
+
+        .profile-stats-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px 18px;
+            margin: 10px 0 4px;
+            color: #c7c9d1;
+            font-size: 13px;
+        }
+        .profile-stat b {
+            color: #fff;
+            font-weight: 700;
+            margin-right: 4px;
+        }
+
+        .bio-text {
+            display: block;
+            width: 100%;
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.75em;
+            color: #9aa3b5;
+        }
+        .bio-text.is-clamped {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            white-space: normal;
+        }
+        .bio-more {
+            display: block;
+            margin-top: 2px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: #2699f7;
+            font-size: 0.875em;
+            font-weight: 700;
+            line-height: 1.75em;
+            cursor: pointer;
+            text-align: left;
+        }
+        .bio-more:hover {
+            text-decoration: underline;
+        }
+
+        .profile-location {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 16px 0;
+            color: #b8bac2;
+            font-size: 14px;
+        }
+
+        .socials.bubble-wrap {
+            flex: 0 0 auto;
+            align-items: center;
+            flex-wrap: wrap;
+            display: flex;
+            flex-direction: row;
+            margin: 12px 16px 4px;
+            font-size: 0.875em;
+            color: #ccd2de;
+        }
+        .socials .bubble {
+            padding: 0.25em 0.75em;
+            border-radius: 1.5em;
+            margin: 0.25em 0.35em;
+            background-color: #191e26;
+            font-size: 1em;
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            transition: background-color 100ms linear;
+            cursor: pointer;
+            color: inherit;
+            text-decoration: none;
+        }
+        .socials .bubble:hover {
+            background-color: #2699f728;
+        }
+        .socials .bubble .icon-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            border-radius: 1.5em;
+            width: 1.6em;
+            height: 1.6em;
+            margin-right: 0.3em;
+        }
+        .socials .bubble .icon-container i {
+            font-size: 0.875em;
+            line-height: 1.6;
+        }
+        .socials .bubble .icon-container.twitter {
+            background-color: #1DA1F2;
+            color: #fff;
+        }
+        .socials .bubble .icon-container.instagram {
+            background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+            color: #fff;
+        }
+        .socials .bubble .icon-container.tiktok {
+            background-color: #fff;
+            color: #000;
+        }
+        .socials .bubble .icon-container.link {
+            background-color: #2a3140;
+            color: #fff;
+        }
+
         .main-header-descripton-row-one-button-container {
             display: flex;
             flex-direction: row;
-
             align-items: center;
-			justify-content: center;
-
+            justify-content: flex-end;
+            gap: 10px;
             height: 55px;
+            padding-right: 12px;
+        }
 
-            padding-right: 8px;
+        .icon-action-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 35px;
+            height: 35px;
+            border-radius: 10em;
+            background-color: #191e26;
+            color: #ccd2de;
+            cursor: pointer;
+            user-select: none;
+            flex: 0 0 auto;
+        }
+        .icon-action-button:hover {
+            color: #2699f7;
+            background-color: #1f2530;
+        }
+        .icon-action-button .copy-link-button-icon {
+            font-size: 16px;
+            line-height: 1;
         }
 
         .copy-link-button {
-            border-radius: 10em;
-
+            display: flex;
+            align-items: center;
+            justify-content: center;
             width: 35px;
             height: 35px;
-
+            border-radius: 10em;
             background-color: #191e26;
-
-            display: flex;
-
-            align-items: center;
-			justify-content: center;
-
             color: #ccd2de;
-
             cursor: pointer;
             user-select: none;
         }
         .copy-link-button:hover {
             color: #2699f7;
         }
-
         .copy-link-button-icon {
             font-size: 18px;
         }
 
         .follow-button {
             border-radius: 10em;
-
             width: 83px;
             height: 35px;
-
             display: flex;
-
             align-items: center;
             justify-content: center;
-
             text-align: center;
-
             background-color: #2699f7;
-
             cursor: pointer;
             user-select: none;
-
-            margin-left: 10px;
+            margin-left: 0;
+            flex: 0 0 auto;
         }
 
         .follow-button-text {
@@ -413,23 +536,17 @@
         }
         
         .description-container {
-            padding-left: 16px;
-
-            line-height: 2.8em;
-            color: #637395;
-
-            font-size: 0.98em;
+            padding: 12px 16px 8px;
+            line-height: 1.75em;
+            color: #9aa3b5;
+            font-size: 0.875em;
             letter-spacing: 0.03em;
-
-            white-space: pre-wrap;
-            word-break: break-word;
-
             text-align: left;
-
             display: flex;
-
-            padding-top: 20px;
-            padding-bottom: 15px;
+            flex-direction: column;
+            align-items: flex-start;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .media-controll-section-one {
@@ -685,10 +802,14 @@
 						<div class="main-header-descripton-row-one-spacer"></div>
 						<div class="main-header-descripton-row-one-button-container-wrapper">
 							<div class="main-header-descripton-row-one-button-container">
-								<div class="copy-link-button" onclick="copyPageLink()">
-									<div class="copy-link-button-icon">
-										<i class="fa-fw fas fa-arrow-right-from-bracket fa-rotate-270"></i>
-									</div>
+								<div class="icon-action-button" onclick="openLogin()" title="Message">
+									<div class="copy-link-button-icon"><i class="fa-fw far fa-envelope"></i></div>
+								</div>
+								<div class="icon-action-button" onclick="openLogin()" title="Tip">
+									<div class="copy-link-button-icon"><i class="fa-fw fas fa-dollar-sign"></i></div>
+								</div>
+								<div class="icon-action-button" onclick="openLogin()" title="More">
+									<div class="copy-link-button-icon"><i class="fa-fw fas fa-ellipsis"></i></div>
 								</div>
 								<div class="follow-button" onclick="openLogin()">
 									<span class="follow-button-text">{{ 'Following' if unlocked else 'Follow' }}</span>
@@ -708,22 +829,58 @@
 								</div>
 							</div>
 							<div class="model-name-username-text">
-								<span>@{{ content.nick | replace(' ', '') }}</span>
+								<span>@{{ content.handle }}</span>
 							</div>
+							<div class="profile-stats-row">
+								<div class="profile-stat"><b>{{ content.display_likes }}</b> Likes</div>
+								<div class="profile-stat"><b>{{ content.display_followers }}</b> Followers</div>
+								<div class="profile-stat"><b>{{ content.display_photos }}</b> Photos</div>
+								<div class="profile-stat"><b>{{ content.display_videos }}</b> Videos</div>
+							</div>
+							{% if content.headline %}
 							<div class="model-name-online-status-text">
 								<span>{{ content.headline }}</span>
 							</div>
+							{% endif %}
 						</div>
 					</div>
 					<div class="description-container">
-						<span>{{ content.bio }}</span>
+						<span class="bio-text is-clamped" id="bio-text">{{ content.bio }}</span>
+						<button type="button" class="bio-more" id="bio-more" hidden>Show more</button>
 					</div>
+					{% if content.location %}
+					<div class="profile-location">
+						<i class="fa-fw fas fa-location-dot"></i>
+						<span>{{ content.location }}</span>
+					</div>
+					{% endif %}
 					{% if content.socials %}
-					<nav class="socials-row">
+					<div class="socials margin-top-2 bubble-wrap">
 						{% for s in content.socials %}
-						<a href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ s.title }}</a>
+						{% set t = ((s.title or '') ~ ' ' ~ (s.url or ''))|lower %}
+						{% if 'tiktok' in t %}
+							{% set net = 'tiktok' %}
+							{% set icon = 'fa-brands fa-fw fa-tiktok' %}
+							{% set label = s.title or 'TikTok' %}
+						{% elif 'insta' in t %}
+							{% set net = 'instagram' %}
+							{% set icon = 'fa-brands fa-fw fa-instagram' %}
+							{% set label = s.title or 'Instagram' %}
+						{% elif 'twitter' in t or 'x.com' in t or (s.title or '')|lower in ['x', 'twitter'] %}
+							{% set net = 'twitter' %}
+							{% set icon = 'fa-brands fa-fw fa-x-twitter' %}
+							{% set label = s.title or 'X' %}
+						{% else %}
+							{% set net = 'link' %}
+							{% set icon = 'fa-solid fa-fw fa-link' %}
+							{% set label = s.title or 'Link' %}
+						{% endif %}
+						<a class="bubble" href="{{ s.url }}" target="_blank" rel="noopener noreferrer nofollow" onclick="event.stopPropagation()">
+							<div class="icon-container {{ net }}"><i class="{{ icon }}"></i></div>
+							<span>{{ label }}</span>
+						</a>
 						{% endfor %}
-					</nav>
+					</div>
 					{% endif %}
 					<div class="media-content">
 						<div class="media-controll-section-one">

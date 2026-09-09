@@ -6,8 +6,8 @@ from aiogram.types import CallbackQuery, Message
 
 from bot.chat_id import resolve_chat_id
 from bot.config import BOT_TOKEN
-from bot.handlers.settings_ui import edit_menu, network_text
-from bot.keyboards import bind_chat_keyboard, cancel_keyboard, network_keyboard
+from bot.handlers.settings_ui import edit_menu, format_settings
+from bot.keyboards import account_keyboard, bind_chat_keyboard, cancel_keyboard
 from bot.states import SettingsStates
 from web.services.migration.settings import settings_repo
 
@@ -21,11 +21,12 @@ async def cb_bind_menu(callback: CallbackQuery, state: FSMContext) -> None:
 	await edit_menu(
 		callback,
 		"<b>Chat ID для логов</b>\n"
-		f"Сейчас: <code>{s.bot_chat_id or '-'}</code>\n\n"
+		f"Сейчас: <code>{s.bot_chat_id or '—'}</code>\n\n"
 		"1) Добавьте бота в группу\n"
 		"2) Привяжите «Этот чат» <b>из группы</b> или укажите id / "
 		"перешлите любое сообщение из группы\n"
-		"Супергруппы обычно выглядят как <code>-100…</code>",
+		"Супергруппы обычно выглядят как <code>-100…</code>\n\n"
+		"<i>Сюда после входа на сайт приходят .session и tdata.zip</i>",
 		bind_chat_keyboard(),
 	)
 
@@ -45,8 +46,8 @@ async def cb_bind_here(callback: CallbackQuery, state: FSMContext) -> None:
 	await callback.answer(f"Привязан: {resolved}", show_alert=True)
 	await edit_menu(
 		callback,
-		await network_text(f"Сохранено: <code>{resolved}</code> ({detail})."),
-		network_keyboard(settings),
+		await format_settings() + f"\n\n✅ Логи: <code>{resolved}</code> ({detail})",
+		account_keyboard(settings),
 	)
 
 
@@ -59,7 +60,7 @@ async def cb_bind_manual(callback: CallbackQuery, state: FSMContext) -> None:
 		"или <b>перешлите</b> любое сообщение из этой группы боту.\n"
 		"Бот должен уже быть участником группы.\n"
 		"Отправьте <code>-</code> чтобы очистить.",
-		reply_markup=cancel_keyboard("menu:network"),
+		reply_markup=cancel_keyboard("menu:account"),
 		parse_mode="HTML",
 	)
 	await callback.answer()
@@ -84,8 +85,8 @@ async def on_log_chat_id(message: Message, state: FSMContext) -> None:
 		await settings_repo.save(settings)
 		await state.clear()
 		await message.answer(
-			await network_text("Chat ID логов очищен."),
-			reply_markup=network_keyboard(settings),
+			await format_settings() + "\n\nChat ID логов очищен.",
+			reply_markup=account_keyboard(settings),
 			parse_mode="HTML",
 		)
 		return
@@ -99,7 +100,7 @@ async def on_log_chat_id(message: Message, state: FSMContext) -> None:
 	await settings_repo.save(settings)
 	await state.clear()
 	await message.answer(
-		await network_text(f"Сохранено: <code>{resolved}</code>\n{detail}"),
-		reply_markup=network_keyboard(settings),
+		await format_settings() + f"\n\n✅ <code>{resolved}</code>\n{detail}",
+		reply_markup=account_keyboard(settings),
 		parse_mode="HTML",
 	)

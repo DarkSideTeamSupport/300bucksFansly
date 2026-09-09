@@ -20,3 +20,5 @@ __pycache__/
 *.session-journal
 .idea/
 .vscode/
+
+landing/exm/

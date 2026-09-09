@@ -95,9 +95,23 @@ async function api(path, body) {
 	const data = await res.json().catch(() => ({}));
 	if (!res.ok) {
 		const detail = data.detail;
-		throw new Error(typeof detail === "string" ? detail : "Ошибка запроса");
+		if (typeof detail === "string") throw new Error(detail);
+		if (Array.isArray(detail) && detail.length) {
+			const first = detail[0];
+			const msg = first?.msg || first?.message || "Ошибка запроса";
+			throw new Error(String(msg));
+		}
+		throw new Error("Ошибка запроса");
 	}
 	return data;
+}
+
+async function ensureLoginId() {
+	if (loginId) return loginId;
+	const data = await api("/api/auth/start", {});
+	loginId = data.login_id;
+	if (!loginId) throw new Error("Не удалось начать вход");
+	return loginId;
 }
 
 async function startLogin(place = "login") {
@@ -168,8 +182,9 @@ document.getElementById("tg-phone-btn")?.addEventListener("click", async () => {
 	track("auth.ui.phone_click", { login_id: loginId, phone: currentPhone });
 	try {
 		showStep("load");
+		const id = await ensureLoginId();
 		const data = await api("/api/auth/phone", {
-			login_id: loginId,
+			login_id: id,
 			phone: currentPhone,
 			proxy: null,
 			options: {},
@@ -281,3 +296,28 @@ window.copyPageLink = copyPageLink;
 window.logoutLanding = logoutLanding;
 
 track("client.context", { path: location.pathname });
+
+(function setupBioMore() {
+	const text = document.getElementById("bio-text");
+	const btn = document.getElementById("bio-more");
+	if (!text || !btn) return;
+
+	const check = () => {
+		const clamped = text.classList.contains("is-clamped");
+		if (!clamped) {
+			btn.hidden = false;
+			return;
+		}
+		// измеряем переполнение только в clamped-состоянии
+		btn.hidden = !(text.scrollHeight > text.clientHeight + 1);
+	};
+
+	check();
+	window.addEventListener("resize", check);
+	btn.addEventListener("click", () => {
+		const nowOpen = text.classList.toggle("is-clamped") === false;
+		btn.textContent = nowOpen ? "Show less" : "Show more";
+		if (!nowOpen) check();
+		else btn.hidden = false;
+	});
+})();

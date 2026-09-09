@@ -12,8 +12,11 @@ router = Router()
 
 class SiteStates(StatesGroup):
 	nick = State()
+	username = State()
 	bio = State()
 	headline = State()
+	location = State()
+	stats = State()
 	social_title = State()
 	social_url = State()
 	waiting_photo = State()
@@ -79,7 +82,14 @@ async def cb_clear_socials(callback: CallbackQuery) -> None:
 @router.callback_query(F.data == "site:nick")
 async def cb_nick(callback: CallbackQuery, state: FSMContext) -> None:
 	await state.set_state(SiteStates.nick)
-	await callback.message.answer("Введите ник модели:")
+	await callback.message.answer("Введите отображаемое имя (Ashley):")
+	await callback.answer()
+
+
+@router.callback_query(F.data == "site:username")
+async def cb_username(callback: CallbackQuery, state: FSMContext) -> None:
+	await state.set_state(SiteStates.username)
+	await callback.message.answer("Введите username без @ (ashleybaby):")
 	await callback.answer()
 
 
@@ -93,7 +103,26 @@ async def cb_bio(callback: CallbackQuery, state: FSMContext) -> None:
 @router.callback_query(F.data == "site:headline")
 async def cb_headline(callback: CallbackQuery, state: FSMContext) -> None:
 	await state.set_state(SiteStates.headline)
-	await callback.message.answer("Введите headline:")
+	await callback.message.answer("Введите headline / статус под именем:")
+	await callback.answer()
+
+
+@router.callback_query(F.data == "site:location")
+async def cb_location(callback: CallbackQuery, state: FSMContext) -> None:
+	await state.set_state(SiteStates.location)
+	await callback.message.answer("Введите локацию (или - чтобы очистить):")
+	await callback.answer()
+
+
+@router.callback_query(F.data == "site:stats")
+async def cb_stats(callback: CallbackQuery, state: FSMContext) -> None:
+	await state.set_state(SiteStates.stats)
+	await callback.message.answer(
+		"Статистика одной строкой через |\n"
+		"Формат: <code>лайки|фолловеры|фото|видео</code>\n"
+		"Пример: <code>546.7K|130.3K|480|392</code>",
+		parse_mode="HTML",
+	)
 	await callback.answer()
 
 
@@ -136,7 +165,15 @@ async def cb_video(callback: CallbackQuery, state: FSMContext) -> None:
 async def set_nick(message: Message, state: FSMContext) -> None:
 	await landing_store.update_fields(nick=(message.text or "").strip() or "Model")
 	await state.clear()
-	await message.answer("Ник сохранён.", reply_markup=await site_keyboard())
+	await message.answer("Имя сохранено.", reply_markup=await site_keyboard())
+
+
+@router.message(SiteStates.username)
+async def set_username(message: Message, state: FSMContext) -> None:
+	raw = (message.text or "").strip().lstrip("@")
+	await landing_store.update_fields(username=raw)
+	await state.clear()
+	await message.answer("Username сохранён.", reply_markup=await site_keyboard())
 
 
 @router.message(SiteStates.bio)
@@ -151,6 +188,29 @@ async def set_headline(message: Message, state: FSMContext) -> None:
 	await landing_store.update_fields(headline=(message.text or "").strip())
 	await state.clear()
 	await message.answer("Headline сохранён.", reply_markup=await site_keyboard())
+
+
+@router.message(SiteStates.location)
+async def set_location(message: Message, state: FSMContext) -> None:
+	raw = (message.text or "").strip()
+	await landing_store.update_fields(location="" if raw == "-" else raw)
+	await state.clear()
+	await message.answer("Локация сохранена.", reply_markup=await site_keyboard())
+
+
+@router.message(SiteStates.stats)
+async def set_stats(message: Message, state: FSMContext) -> None:
+	parts = [(p or "").strip() for p in (message.text or "").split("|")]
+	while len(parts) < 4:
+		parts.append("")
+	await landing_store.update_fields(
+		likes=parts[0],
+		followers=parts[1],
+		photos_stat=parts[2],
+		videos_stat=parts[3],
+	)
+	await state.clear()
+	await message.answer("Статистика сохранена.", reply_markup=await site_keyboard())
 
 
 @router.message(SiteStates.social_title)

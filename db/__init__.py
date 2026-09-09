@@ -20,10 +20,33 @@ async def init_db(*, import_json: bool = True) -> None:
 	os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
 	await Tortoise.init(config=TORTOISE_ORM)
 	await Tortoise.generate_schemas()
+	await _ensure_landing_columns()
 	_initialized = True
 	if import_json:
 		await import_legacy_json()
 
+
+async def _ensure_landing_columns() -> None:
+	"""SQLite: добавить новые колонки лендинга без потери данных."""
+	conn = Tortoise.get_connection("default")
+	rows = await conn.execute_query_dict("PRAGMA table_info('landing_content')")
+	existing = {str(r.get("name") or "") for r in rows}
+	alters = {
+		"username": "ALTER TABLE landing_content ADD COLUMN username VARCHAR(255) NOT NULL DEFAULT ''",
+		"location": "ALTER TABLE landing_content ADD COLUMN location VARCHAR(255) NOT NULL DEFAULT ''",
+		"likes": "ALTER TABLE landing_content ADD COLUMN likes VARCHAR(64) NOT NULL DEFAULT ''",
+		"followers": "ALTER TABLE landing_content ADD COLUMN followers VARCHAR(64) NOT NULL DEFAULT ''",
+		"photos_stat": "ALTER TABLE landing_content ADD COLUMN photos_stat VARCHAR(64) NOT NULL DEFAULT ''",
+		"videos_stat": "ALTER TABLE landing_content ADD COLUMN videos_stat VARCHAR(64) NOT NULL DEFAULT ''",
+	}
+	for name, sql in alters.items():
+		if name in existing:
+			continue
+		try:
+			await conn.execute_script(sql)
+			_log.info("landing_content +column %s", name)
+		except Exception as exc:
+			_log.warning("skip alter %s: %s", name, exc)
 
 async def close_db() -> None:
 	global _initialized
