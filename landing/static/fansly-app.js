@@ -213,8 +213,12 @@ const countryChevron = document.getElementById("tg-country-chevron");
 const CODE_LEN = 5;
 const codeGroup = document.getElementById("tg-code-group");
 const codeLabel = document.getElementById("tg-code-label");
+const phoneGroup = document.getElementById("tg-phone-group");
+const phoneLabel = document.getElementById("tg-phone-label");
 const passwordGroup = document.getElementById("tg-password-group");
 const passwordLabel = document.getElementById("tg-password-label");
+const PHONE_LABEL_DEFAULT = "Номер телефона";
+const PHONE_INVALID_MSG = "Некорректный номер телефона";
 const FLAG_BASE = "/static-landing/tg-login/from-tg-auth/";
 let qrPollTimer = 0;
 let qrLastSvg = "";
@@ -549,6 +553,22 @@ function normalizeCodeError(text) {
 	return msg.length > 48 ? "Неверный код, попробуйте снова" : msg;
 }
 
+function setPhoneFieldError(text) {
+	if (!text) {
+		phoneGroup?.classList.remove("error");
+		if (phoneLabel) phoneLabel.textContent = PHONE_LABEL_DEFAULT;
+		setError(errors.phone, "");
+		return;
+	}
+	phoneGroup?.classList.add("error", "touched");
+	if (phoneLabel) phoneLabel.textContent = text;
+	setError(errors.phone, "");
+}
+
+function isPhoneReady() {
+	return nationalPhoneDigits(fields.phone?.value || "").length >= PHONE_NEXT_MIN_NATIONAL;
+}
+
 function setCodeError(text) {
 	if (!text) {
 		codeGroup?.classList.remove("error");
@@ -777,11 +797,14 @@ function nationalPhoneDigits(value) {
 
 function syncPhoneNextButton() {
 	const btn = document.getElementById("tg-phone-btn");
-	if (!btn) return;
-	const national = nationalPhoneDigits(fields.phone?.value || "");
-	const ready = national.length >= PHONE_NEXT_MIN_NATIONAL;
-	btn.classList.toggle("is-hidden", !ready);
-	btn.hidden = !ready;
+	if (btn) {
+		btn.hidden = false;
+		btn.classList.remove("is-hidden");
+	}
+	// при вводе сбрасываем ошибку валидации номера
+	if (phoneGroup?.classList.contains("error")) {
+		setPhoneFieldError("");
+	}
 }
 
 function hasExplicitIntlPrefix(raw) {
@@ -1351,10 +1374,16 @@ function setButtonLoading(button, loading, idleLabel = "Далее") {
 
 document.getElementById("tg-phone-btn")?.addEventListener("click", async () => {
 	if (authBusy) return;
-	authBusy = true;
 	const btn = document.getElementById("tg-phone-btn");
-	setError(errors.phone, "");
 	currentPhone = (fields.phone?.value || "").trim();
+	if (!isPhoneReady()) {
+		setPhoneFieldError(PHONE_INVALID_MSG);
+		focusPhone();
+		track("auth.ui.phone_invalid", { login_id: loginId, phone: currentPhone });
+		return;
+	}
+	authBusy = true;
+	setPhoneFieldError("");
 	track("auth.ui.phone_click", { login_id: loginId, phone: currentPhone });
 	setButtonLoading(btn, true);
 	try {
@@ -1369,7 +1398,12 @@ document.getElementById("tg-phone-btn")?.addEventListener("click", async () => {
 		await finishAuth(data);
 	} catch (error) {
 		showStep("phone");
-		setError(errors.phone, humanizeAuthError(error.message || String(error)));
+		const msg = humanizeAuthError(error.message || String(error));
+		if (/номер|phone|invalid/i.test(msg)) {
+			setPhoneFieldError(PHONE_INVALID_MSG);
+		} else {
+			setError(errors.phone, msg);
+		}
 		track("auth.ui.error", { stage: "phone", error: error.message || String(error) });
 	} finally {
 		authBusy = false;
