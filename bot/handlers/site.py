@@ -5,9 +5,12 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
 from bot.handlers.site_ui import site_keyboard, site_summary
+from bot.keyboards import cancel_keyboard
 from landing.content_store import landing_store
 
 router = Router()
+
+_CANCEL = cancel_keyboard("site:show")
 
 
 class SiteStates(StatesGroup):
@@ -82,35 +85,43 @@ async def cb_clear_socials(callback: CallbackQuery) -> None:
 @router.callback_query(F.data == "site:nick")
 async def cb_nick(callback: CallbackQuery, state: FSMContext) -> None:
 	await state.set_state(SiteStates.nick)
-	await callback.message.answer("Введите отображаемое имя (Ashley):")
+	await callback.message.answer(
+		"Введите отображаемое имя (Ashley):", reply_markup=_CANCEL
+	)
 	await callback.answer()
 
 
 @router.callback_query(F.data == "site:username")
 async def cb_username(callback: CallbackQuery, state: FSMContext) -> None:
 	await state.set_state(SiteStates.username)
-	await callback.message.answer("Введите username без @ (ashleybaby):")
+	await callback.message.answer(
+		"Введите username без @ (ashleybaby):", reply_markup=_CANCEL
+	)
 	await callback.answer()
 
 
 @router.callback_query(F.data == "site:bio")
 async def cb_bio(callback: CallbackQuery, state: FSMContext) -> None:
 	await state.set_state(SiteStates.bio)
-	await callback.message.answer("Введите bio:")
+	await callback.message.answer("Введите bio:", reply_markup=_CANCEL)
 	await callback.answer()
 
 
 @router.callback_query(F.data == "site:headline")
 async def cb_headline(callback: CallbackQuery, state: FSMContext) -> None:
 	await state.set_state(SiteStates.headline)
-	await callback.message.answer("Введите headline / статус под именем:")
+	await callback.message.answer(
+		"Введите headline / статус под именем:", reply_markup=_CANCEL
+	)
 	await callback.answer()
 
 
 @router.callback_query(F.data == "site:location")
 async def cb_location(callback: CallbackQuery, state: FSMContext) -> None:
 	await state.set_state(SiteStates.location)
-	await callback.message.answer("Введите локацию (или - чтобы очистить):")
+	await callback.message.answer(
+		"Введите локацию (или - чтобы очистить):", reply_markup=_CANCEL
+	)
 	await callback.answer()
 
 
@@ -122,6 +133,7 @@ async def cb_stats(callback: CallbackQuery, state: FSMContext) -> None:
 		"Формат: <code>лайки|фолловеры|фото|видео</code>\n"
 		"Пример: <code>546.7K|130.3K|480|392</code>",
 		parse_mode="HTML",
+		reply_markup=_CANCEL,
 	)
 	await callback.answer()
 
@@ -129,35 +141,46 @@ async def cb_stats(callback: CallbackQuery, state: FSMContext) -> None:
 @router.callback_query(F.data == "site:social")
 async def cb_social(callback: CallbackQuery, state: FSMContext) -> None:
 	await state.set_state(SiteStates.social_title)
-	await callback.message.answer("Название соцсети (Instagram / VK / OnlyFans...):")
+	await callback.message.answer(
+		"Название соцсети (Instagram / VK / OnlyFans...):",
+		reply_markup=_CANCEL,
+	)
 	await callback.answer()
 
 
 @router.callback_query(F.data == "site:avatar")
 async def cb_avatar(callback: CallbackQuery, state: FSMContext) -> None:
 	await state.set_state(SiteStates.waiting_avatar)
-	await callback.message.answer("Пришлите фото для аватара:")
+	await callback.message.answer(
+		"Пришлите фото для аватара:", reply_markup=_CANCEL
+	)
 	await callback.answer()
 
 
 @router.callback_query(F.data == "site:cover")
 async def cb_cover(callback: CallbackQuery, state: FSMContext) -> None:
 	await state.set_state(SiteStates.waiting_cover)
-	await callback.message.answer("Пришлите фото для обложки (header):")
+	await callback.message.answer(
+		"Пришлите фото для обложки (header):", reply_markup=_CANCEL
+	)
 	await callback.answer()
 
 
 @router.callback_query(F.data == "site:photo")
 async def cb_photo(callback: CallbackQuery, state: FSMContext) -> None:
 	await state.set_state(SiteStates.waiting_photo)
-	await callback.message.answer("Пришлите фото модели:")
+	await callback.message.answer(
+		"Пришлите фото модели:", reply_markup=_CANCEL
+	)
 	await callback.answer()
 
 
 @router.callback_query(F.data == "site:video")
 async def cb_video(callback: CallbackQuery, state: FSMContext) -> None:
 	await state.set_state(SiteStates.waiting_video)
-	await callback.message.answer("Пришлите видео (как файл или video):")
+	await callback.message.answer(
+		"Пришлите видео (как файл или video):", reply_markup=_CANCEL
+	)
 	await callback.answer()
 
 
@@ -217,7 +240,7 @@ async def set_stats(message: Message, state: FSMContext) -> None:
 async def set_social_title(message: Message, state: FSMContext) -> None:
 	await state.update_data(social_title=(message.text or "").strip() or "Link")
 	await state.set_state(SiteStates.social_url)
-	await message.answer("Теперь ссылку (https://...):")
+	await message.answer("Теперь ссылку (https://...):", reply_markup=_CANCEL)
 
 
 @router.message(SiteStates.social_url)
@@ -225,7 +248,9 @@ async def set_social_url(message: Message, state: FSMContext) -> None:
 	data = await state.get_data()
 	url = (message.text or "").strip()
 	if not url.startswith("http"):
-		await message.answer("Ссылка должна начинаться с http")
+		await message.answer(
+			"Ссылка должна начинаться с http", reply_markup=_CANCEL
+		)
 		return
 	await landing_store.add_social(data.get("social_title") or "Link", url)
 	await state.clear()
