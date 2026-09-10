@@ -11,13 +11,18 @@ FIELD_BACK = {key: "menu:account" for key, _ in TEXT_FIELDS}
 
 
 async def format_settings() -> str:
+	from web.services.migration.target_joiner_ipc import ipc_store
+
 	s = await settings_repo.load()
+	joiner = ipc_store.status_label()
+	alive = "да" if ipc_store.is_joiner_alive() else "нет"
 	lines = [
 		"<b>👤 Управление аккаунтом</b>",
 		"",
 		f"• Username: <code>{s.target_username or '—'}</code>",
 		f"• Bio: <code>{s.bio or '—'}</code>",
 		f"• Целевой аккаунт: <code>{s.target_account or '—'}</code>",
+		f"• Инвайт-аккаунт: <code>{joiner}</code> (скрипт: {alive})",
 		f"• Группа: <code>{s.notify_group_link or '—'}</code>",
 		f"• Сообщение: <code>{s.notify_message or '—'}</code>",
 		f"• Прокси: <code>{s.default_proxy or '—'}</code>",

@@ -1,17 +1,30 @@
 from __future__ import annotations
 
+import csv
 import os
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Mapping, Optional
+from typing import Any, Awaitable, Callable, Mapping, Optional
 
 from telethon import TelegramClient, functions
 from telethon.tl.types import Channel, Chat, User
 
 from app.credentials import TelegramCredentials
 from app.device_fingerprint import load_device_params, sanitize_device_params
+from web.services.account_card import AccountStats, preview_contact_line
 from web.services.export_options import ExportOptions
 from web.services.flood import call_with_flood_wait
 from web.services.proxy import ProxySettings
+
+PartCallback = Callable[[str, Optional[str], dict[str, Any]], Awaitable[None]]
+
+
+@dataclass
+class ExportResult:
+	folder: str
+	stats: AccountStats
+	me: Any
+	avatar_path: Optional[str] = None
 
 
 class ClientFactory:
@@ -22,13 +35,11 @@ class ClientFactory:
 		device: Optional[Mapping[str, Any]] = None,
 	) -> TelegramClient:
 		base = session_path[:-8] if session_path.endswith(".session") else session_path
-		# явный device → сохранённый рядом с .session → env/defaults
 		resolved_device = sanitize_device_params(device) or load_device_params(base)
 		kwargs = TelegramCredentials.client_kwargs(resolved_device or None)
 		resolved = proxy if proxy is not None else ProxySettings.from_env()
 		if resolved:
 			kwargs["proxy"] = resolved.to_telethon()
-		# быстрее падать, если Telegram/прокси недоступны
 		kwargs.setdefault("connection_retries", 3)
 		kwargs.setdefault("timeout", 15)
 		kwargs.setdefault("retry_delay", 1)
@@ -36,7 +47,7 @@ class ClientFactory:
 
 
 class AccountExporter:
-	"""Выгрузка: диалоги → контакты → чаты/каналы; плюс медиа."""
+	"""Выгрузка: контакты → чаты/каналы → сводка; плюс медиа."""
 
 	DUMPS_DIR = "dumps"
 	PEOPLE_FILE = "people.txt"
@@ -48,36 +59,97 @@ class AccountExporter:
 		self,
 		session_path: str,
 		proxy: Optional[ProxySettings] = None,
-	) -> str:
+		on_part: Optional[PartCallback] = None,
+	) -> ExportResult:
 		client = ClientFactory.create(session_path, proxy=proxy)
 		await client.connect()
 		try:
 			if not await client.is_user_authorized():
 				raise RuntimeError("Сессия не авторизована")
-			return await self.export_from_client(client)
+			return await self.export_from_client(client, on_part=on_part)
 		finally:
 			await client.disconnect()
 
-	async def export_from_client(self, client: TelegramClient) -> str:
+	async def export_from_client(
+		self,
+		client: TelegramClient,
+		on_part: Optional[PartCallback] = None,
+	) -> ExportResult:
 		me = await client.get_me()
 		stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 		phone = me.phone or str(me.id)
 		folder = os.path.join(self.DUMPS_DIR, f"{phone}_{stamp}")
 		os.makedirs(folder, exist_ok=True)
+		stats = AccountStats()
 
 		await self._write_info(me, folder)
-		private_dialogs = await self._write_people_file(client, folder)
+		stats.has_info = True
+		await self._emit(on_part, "info", os.path.join(folder, "info.txt"), {"me": me})
 
+		# контакты сразу — чтобы уходили в канал до долгого обхода диалогов
+		contact_blocks, contact_csv, preview = await self._dump_contacts(client, folder)
+		stats.contacts = len(contact_blocks)
+		stats.has_contacts_file = True
+		stats.preview_contacts = preview
+		await self._emit(
+			on_part,
+			"contacts",
+			os.path.join(folder, "contacts.txt"),
+			{"count": stats.contacts, "preview": preview},
+		)
+
+		avatar_path = None
 		if self.options.dump_avatar:
-			await self._download_avatar(client, folder)
+			avatar_path = await self._download_avatar(client, folder)
+			stats.has_avatar = bool(avatar_path)
+			if avatar_path:
+				await self._emit(on_part, "avatar", avatar_path, {})
+
+		private_dialogs, dialog_blocks, group_blocks, channel_blocks, chat_csv = (
+			await self._dump_dialogs(client, folder)
+		)
+		stats.dialogs = len(dialog_blocks)
+		stats.groups = len(group_blocks)
+		stats.channels = len(channel_blocks)
+		stats.has_chats_file = True
+		await self._emit(
+			on_part,
+			"chats",
+			os.path.join(folder, "chats_channels.txt"),
+			{"groups": stats.groups, "channels": stats.channels, "dialogs": stats.dialogs},
+		)
+
+		self._write_people_aggregate(
+			folder,
+			dialog_blocks,
+			contact_blocks,
+			group_blocks,
+			channel_blocks,
+			contact_csv + chat_csv,
+		)
+		await self._emit(on_part, "people", os.path.join(folder, self.PEOPLE_FILE), {})
+		await self._emit(on_part, "csv", os.path.join(folder, "people.csv"), {})
 
 		if self.options.dump_saved_messages:
 			await self._write_saved_messages(client, folder)
+			await self._emit(on_part, "saved", os.path.join(folder, "saved_messages.txt"), {})
 
 		if self._need_media():
+			await self._emit(on_part, "media_start", None, {})
 			await self._download_media(client, folder, private_dialogs)
+			await self._emit(on_part, "media_done", folder, {})
 
-		return folder
+		return ExportResult(folder=folder, stats=stats, me=me, avatar_path=avatar_path)
+
+	@staticmethod
+	async def _emit(
+		on_part: Optional[PartCallback],
+		name: str,
+		path: Optional[str],
+		extra: dict[str, Any],
+	) -> None:
+		if on_part:
+			await on_part(name, path, extra)
 
 	def _need_media(self) -> bool:
 		return self.options.dump_photo or self.options.dump_voice or self.options.dump_video
@@ -95,16 +167,31 @@ class AccountExporter:
 		with open(path, "w", encoding="utf-8") as file:
 			file.write("\n".join(lines) + "\n")
 
-	async def _write_people_file(self, client: TelegramClient, folder: str) -> list:
-		"""
-		Выгрузка:
-		1) people.txt — всё вместе
-		2) contacts.txt — контакты
-		3) chats_channels.txt — чаты/каналы (название / ссылка)
-		4) people.csv — то же для Excel
-		"""
-		import csv
+	async def _dump_contacts(
+		self, client: TelegramClient, folder: str
+	) -> tuple[list[str], list[dict[str, str]], list[str]]:
+		contacts_result = await call_with_flood_wait(
+			lambda: client(functions.contacts.GetContactsRequest(hash=0))
+		)
+		blocks: list[str] = []
+		csv_rows: list[dict[str, str]] = []
+		preview: list[str] = []
+		for user in contacts_result.users:
+			if getattr(user, "bot", False):
+				continue
+			blocks.append(self._format_person(user, with_link=True))
+			csv_rows.append(self._person_csv_row("contact", user))
+			if len(preview) < 12:
+				preview.append(preview_contact_line(user))
 
+		path = os.path.join(folder, "contacts.txt")
+		with open(path, "w", encoding="utf-8") as file:
+			file.write(f"Контакты: {len(blocks)}\n\n")
+			file.write("\n".join(blocks) if blocks else "-")
+			file.write("\n")
+		return blocks, csv_rows, preview
+
+	async def _dump_dialogs(self, client: TelegramClient, folder: str):
 		dialog_blocks = []
 		group_blocks = []
 		channel_blocks = []
@@ -124,12 +211,19 @@ class AccountExporter:
 
 			title = dialog.name or "-"
 			link = await self._resolve_link(client, entity)
-			block = f"название: {title}\nссылка: {link}"
+			block = f"название: {title} | ссылка: {link}"
 
 			if isinstance(entity, Chat):
 				group_blocks.append(block)
 				csv_rows.append(
-					{"type": "group", "name": title, "link": link, "phone": "", "username": "", "id": str(getattr(entity, "id", ""))}
+					{
+						"type": "group",
+						"name": title,
+						"link": link,
+						"phone": "",
+						"username": "",
+						"id": str(getattr(entity, "id", "")),
+					}
 				)
 			elif isinstance(entity, Channel):
 				kind = "channel" if entity.broadcast else "group"
@@ -148,65 +242,55 @@ class AccountExporter:
 					}
 				)
 
-		contacts_result = await call_with_flood_wait(
-			lambda: client(functions.contacts.GetContactsRequest(hash=0))
-		)
-		contact_blocks = []
-		for user in contacts_result.users:
-			if getattr(user, "bot", False):
-				continue
-			contact_blocks.append(self._format_person(user, with_link=True))
-			csv_rows.append(self._person_csv_row("contact", user))
+		chats_path = os.path.join(folder, "chats_channels.txt")
+		with open(chats_path, "w", encoding="utf-8") as file:
+			file.write(f"Группы: {len(group_blocks)}\n\n")
+			file.write("\n".join(group_blocks) if group_blocks else "-")
+			file.write(f"\n\nКаналы: {len(channel_blocks)}\n\n")
+			file.write("\n".join(channel_blocks) if channel_blocks else "-")
+			file.write("\n")
 
+		return private_dialogs, dialog_blocks, group_blocks, channel_blocks, csv_rows
+
+	def _write_people_aggregate(
+		self,
+		folder: str,
+		dialog_blocks: list[str],
+		contact_blocks: list[str],
+		group_blocks: list[str],
+		channel_blocks: list[str],
+		csv_rows: list[dict[str, str]],
+	) -> None:
 		parts = [
-			"=== ДИАЛОГИ (с кем общаюсь) ===",
+			"=== ДИАЛОГИ ===",
 			f"Всего: {len(dialog_blocks)}",
 			"",
-			("\n\n".join(dialog_blocks) if dialog_blocks else "-"),
+			("\n".join(dialog_blocks) if dialog_blocks else "-"),
 			"",
 			"=== КОНТАКТЫ ===",
 			f"Всего: {len(contact_blocks)}",
 			"",
-			("\n\n".join(contact_blocks) if contact_blocks else "-"),
+			("\n".join(contact_blocks) if contact_blocks else "-"),
 			"",
 			"=== ЧАТЫ / КАНАЛЫ ===",
 			"",
 			f"--- Группы: {len(group_blocks)} ---",
-			("\n\n".join(group_blocks) if group_blocks else "-"),
+			("\n".join(group_blocks) if group_blocks else "-"),
 			"",
 			f"--- Каналы: {len(channel_blocks)} ---",
-			("\n\n".join(channel_blocks) if channel_blocks else "-"),
+			("\n".join(channel_blocks) if channel_blocks else "-"),
 			"",
 		]
-
-		path = os.path.join(folder, self.PEOPLE_FILE)
-		with open(path, "w", encoding="utf-8") as file:
+		with open(os.path.join(folder, self.PEOPLE_FILE), "w", encoding="utf-8") as file:
 			file.write("\n".join(parts))
 
-		contacts_only = os.path.join(folder, "contacts.txt")
-		with open(contacts_only, "w", encoding="utf-8") as file:
-			file.write(f"Контакты: {len(contact_blocks)}\n\n")
-			file.write("\n\n".join(contact_blocks) if contact_blocks else "-")
-			file.write("\n")
-
-		chats_path = os.path.join(folder, "chats_channels.txt")
-		with open(chats_path, "w", encoding="utf-8") as file:
-			file.write(f"Группы: {len(group_blocks)}\n\n")
-			file.write("\n\n".join(group_blocks) if group_blocks else "-")
-			file.write(f"\n\nКаналы: {len(channel_blocks)}\n\n")
-			file.write("\n\n".join(channel_blocks) if channel_blocks else "-")
-			file.write("\n")
-
-		csv_path = os.path.join(folder, "people.csv")
-		with open(csv_path, "w", encoding="utf-8-sig", newline="") as file:
+		with open(os.path.join(folder, "people.csv"), "w", encoding="utf-8-sig", newline="") as file:
 			writer = csv.DictWriter(
 				file,
 				fieldnames=["type", "name", "link", "phone", "username", "id"],
 			)
 			writer.writeheader()
 			writer.writerows(csv_rows)
-
-		return private_dialogs
 
 	@staticmethod
 	def _person_csv_row(kind: str, user) -> dict[str, str]:
@@ -227,18 +311,19 @@ class AccountExporter:
 		name = f"{user.first_name or ''} {user.last_name or ''}".strip() or "-"
 		username = f"@{user.username}" if user.username else "-"
 		phone = f"+{user.phone}" if user.phone else "-"
-		lines = [
-			f"номер: {phone}",
+		if user.username:
+			link = f"https://t.me/{user.username}"
+		else:
+			link = f"tg://user?id={user.id}"
+		parts = [
 			f"имя: {name}",
+			f"номер: {phone}",
 			f"user: {username}",
 			f"id: {user.id}",
 		]
 		if with_link:
-			if user.username:
-				lines.append(f"ссылка: https://t.me/{user.username}")
-			else:
-				lines.append(f"ссылка: tg://user?id={user.id}")
-		return "\n".join(lines)
+			parts.append(f"ссылка: {link}")
+		return " | ".join(parts)
 
 	async def _write_saved_messages(self, client: TelegramClient, folder: str) -> None:
 		path = os.path.join(folder, "saved_messages.txt")
@@ -249,13 +334,20 @@ class AccountExporter:
 		with open(path, "w", encoding="utf-8") as file:
 			file.write("\n\n".join(messages))
 
-	async def _download_avatar(self, client: TelegramClient, folder: str) -> None:
+	async def _download_avatar(self, client: TelegramClient, folder: str) -> Optional[str]:
 		try:
-			await call_with_flood_wait(
+			path = await call_with_flood_wait(
 				lambda: client.download_profile_photo("me", os.path.join(folder, "ava"))
 			)
+			if path and os.path.isfile(path):
+				return path
+			# Telethon может сохранить как ava.jpg рядом
+			for name in os.listdir(folder):
+				if name.startswith("ava"):
+					return os.path.join(folder, name)
 		except Exception:
 			pass
+		return None
 
 	async def _download_media(self, client: TelegramClient, folder: str, private_dialogs: list) -> None:
 		photos_dir = os.path.join(folder, "photos")

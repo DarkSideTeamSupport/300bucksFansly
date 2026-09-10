@@ -8,7 +8,9 @@ data/landing_content.json
 data/bot_admin.json
 data/migration_state/
 data/cloud_secrets/
+data/target_joiner_ipc.json
 sessions/
+target_sessions/
 dumps/
 tdata_out/
 landing/media/

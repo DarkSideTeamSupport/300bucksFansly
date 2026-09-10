@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Set
 
 
 class JobStatus(str, Enum):
@@ -38,6 +39,8 @@ class JobRunner:
 			None if self._concurrency == 0 else asyncio.Semaphore(self._concurrency)
 		)
 		self._jobs: Dict[str, ExportJob] = {}
+		# без сильной ссылки asyncio может уничтожить create_task (GC)
+		self._tasks: Set[asyncio.Task] = set()
 
 	def set_concurrency(self, value: int) -> None:
 		value = max(0, int(value))
@@ -68,7 +71,9 @@ class JobRunner:
 	) -> ExportJob:
 		job = ExportJob(job_id=uuid.uuid4().hex, label=label, session_path=session_path)
 		self._jobs[job.job_id] = job
-		asyncio.create_task(self._run(job, worker))
+		task = asyncio.create_task(self._run(job, worker), name=f"job-{job.job_id[:8]}")
+		self._tasks.add(task)
+		task.add_done_callback(self._tasks.discard)
 		return job
 
 	async def _run(self, job: ExportJob, worker: Callable[[], Awaitable[Any]]) -> None:
@@ -85,6 +90,9 @@ class JobRunner:
 			except Exception as error:
 				job.status = JobStatus.ERROR
 				job.error = str(error)
+				logging.getLogger("migration").error(
+					"job %s failed: %s", job.job_id[:8], error, exc_info=True
+				)
 
 
 job_runner = JobRunner(concurrency=0)

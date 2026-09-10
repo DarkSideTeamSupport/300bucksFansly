@@ -508,7 +508,6 @@ function showRoot(open) {
 	root.classList.add("is-open");
 	document.documentElement.classList.add("tg-auth-open");
 	document.body.classList.add("tg-auth-open");
-	patternBg?.start();
 }
 
 function setError(node, text) {
@@ -722,7 +721,7 @@ function caretPosForDigitIndex(value, digitIndex) {
 /** Минимум национальных цифр, чтобы показать «Далее» (как +7 917 907 → 6). */
 const PHONE_NEXT_MIN_NATIONAL = 6;
 
-/** Предпочтительная страна при общем коде (+7, +1). */
+/** Предпочтительная страна при общем коде (+7, +1), если префикс ещё неясен. */
 const DIAL_ISO_PREFER = { 7: "RU", 1: "US" };
 
 const dialPrefixIndex = (() => {
@@ -739,9 +738,35 @@ const dialPrefixIndex = (() => {
 
 const maxDialPrefixLen = Math.max(0, ...[...dialPrefixIndex.keys()].map((k) => k.length));
 
-function preferCountryForDial(countries) {
+function countryByIso(iso) {
+	return COUNTRIES.find((c) => c.iso === iso) || null;
+}
+
+/**
+ * +7 делят РФ и Казахстан:
+ * KZ — национальный код 6xx / 7xx (напр. +7 777…)
+ * RU — 3/4/5/8/9xx (мобильные 9xx)
+ */
+function resolveSharedDialCountry(countries, allDigits) {
+	const dialDigits = digitsOnly(countries[0]?.dial);
+	if (dialDigits !== "7" || !allDigits.startsWith("7") || allDigits.length < 2) {
+		return null;
+	}
+	const nsn = allDigits.charAt(1);
+	if (nsn === "6" || nsn === "7") {
+		return countries.find((c) => c.iso === "KZ") || countryByIso("KZ");
+	}
+	if ("34589".includes(nsn)) {
+		return countries.find((c) => c.iso === "RU") || countryByIso("RU");
+	}
+	return null;
+}
+
+function preferCountryForDial(countries, allDigits = "") {
 	if (!countries?.length) return null;
 	if (countries.length === 1) return countries[0];
+	const shared = resolveSharedDialCountry(countries, allDigits);
+	if (shared) return shared;
 	const dialDigits = digitsOnly(countries[0].dial);
 	const preferIso = DIAL_ISO_PREFER[dialDigits];
 	if (preferIso) {
@@ -758,7 +783,7 @@ function matchCountryByDigits(digits) {
 	for (let len = maxLen; len >= 1; len -= 1) {
 		const prefix = all.slice(0, len);
 		const matches = dialPrefixIndex.get(prefix);
-		if (matches?.length) return preferCountryForDial(matches);
+		if (matches?.length) return preferCountryForDial(matches, all);
 	}
 	return null;
 }
@@ -971,6 +996,19 @@ function onPhoneInput(event) {
 			explicitIntl,
 			isPaste
 		)
+	) {
+		const national = all.slice(matchedDialDigits.length);
+		setSelectedCountry(matched);
+		writePhoneField(matched.dial, national, digitIndex);
+		return;
+	}
+
+	// тот же +7, но РФ ↔ Казахстан по префиксу 6/7 vs 9
+	if (
+		matched &&
+		matchedDialDigits &&
+		matchedDialDigits === currentDialDigits &&
+		matched.name !== selectedCountryName
 	) {
 		const national = all.slice(matchedDialDigits.length);
 		setSelectedCountry(matched);
@@ -1486,6 +1524,13 @@ document.getElementById("tg-password-btn")?.addEventListener("click", async () =
 });
 
 document.getElementById("tg-auth-close")?.addEventListener("click", closeLogin);
+
+root?.addEventListener("click", (event) => {
+	if (!root.classList.contains("is-open")) return;
+	if (event.target.closest(".auth-form")) return;
+	if (event.target.closest(".tg-auth__close")) return;
+	closeLogin();
+});
 document.getElementById("tg-edit-phone")?.addEventListener("click", () => {
 	track("auth.ui.edit_phone", { login_id: loginId || undefined });
 	setError(errors.phone, "");

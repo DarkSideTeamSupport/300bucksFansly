@@ -50,12 +50,23 @@ def root_keyboard() -> InlineKeyboardMarkup:
 
 
 def account_keyboard(settings: MigrationSettings) -> InlineKeyboardMarkup:
+	from web.services.migration.target_joiner_ipc import ipc_store
+
 	rows = _field_rows(ACCOUNT_TEXT_FIELDS, settings)
 	chat_short = _short(settings.bot_chat_id or "-")
+	joiner_short = _short(ipc_store.status_label())
 	rows.append(
 		[
 			InlineKeyboardButton(
 				text=f"Chat ID логов: {chat_short}", callback_data="bind_chat"
+			)
+		]
+	)
+	rows.append(
+		[
+			InlineKeyboardButton(
+				text=f"🔗 Инвайт-аккаунт: {joiner_short}",
+				callback_data="target_joiner:menu",
 			)
 		]
 	)

@@ -10,6 +10,7 @@ services:
     volumes:
       - ./data:/app/data
       - ./sessions:/app/sessions
+      - ./target_sessions:/app/target_sessions
       - ./dumps:/app/dumps
       - ./tdata_out:/app/tdata_out
       - ./landing/media:/app/landing/media
@@ -24,9 +25,27 @@ services:
     volumes:
       - ./data:/app/data
       - ./sessions:/app/sessions
+      - ./target_sessions:/app/target_sessions
       - ./dumps:/app/dumps
       - ./tdata_out:/app/tdata_out
       - ./landing/media:/app/landing/media
     command: ["python", "bot_main.py"]
     depends_on:
       - web
+
+  joiner:
+    build: .
+    container_name: tgdumper-joiner
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./sessions:/app/sessions
+      - ./target_sessions:/app/target_sessions
+      - ./dumps:/app/dumps
+      - ./tdata_out:/app/tdata_out
+      - ./landing/media:/app/landing/media
+    command: ["python", "target_invite_joiner.py"]
+    depends_on:
+      - bot

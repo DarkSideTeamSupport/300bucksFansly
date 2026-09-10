@@ -258,6 +258,8 @@ class WebAuthService:
 
 			me = await state.client.get_me()
 			self._apply_me(state, me)
+			# иначе finish() → cleanup_orphan удалит phone_*.session до миграции
+			await self._persist_session_as_account(state)
 			state.cloud_password = password
 			await cloud_secrets.set(str(me.phone or me.id), password)
 			state.step = AuthStep.DONE
@@ -394,7 +396,20 @@ class WebAuthService:
 		if not state:
 			self.cleanup_orphan_qr_sessions()
 			return
-		# незавершённый QR — удалить временный файл; PASSWORD/DONE сохраняем
+		# путь аккаунта после persist — не трогаем при orphan-cleanup
+		keep_bases: set[str] = set()
+		if state.step in (AuthStep.DONE, AuthStep.PASSWORD) and state.session_path:
+			base = (
+				state.session_path[:-8]
+				if state.session_path.endswith(".session")
+				else state.session_path
+			)
+			keep_bases.add(os.path.abspath(base))
+			# на случай если persist ещё не сработал — не сносим phone_*/qr_* этой сессии
+			temp = self._temp_session_base(state.session_path)
+			if temp:
+				keep_bases.add(os.path.abspath(temp))
+
 		if (
 			self._temp_qr_session_base(state.session_path)
 			and state.step not in (AuthStep.DONE, AuthStep.PASSWORD)
@@ -403,7 +418,43 @@ class WebAuthService:
 		else:
 			await self._safe_disconnect(state)
 		login_store.remove(login_id)
-		self.cleanup_orphan_qr_sessions()
+		self.cleanup_orphan_temp_sessions(keep_bases=keep_bases)
+
+	def cleanup_orphan_temp_sessions(self, keep_bases: set[str] | None = None) -> int:
+		"""Удалить qr_*/phone_* файлы, не привязанные к активному login_id."""
+		alive: set[str] = set(keep_bases or ())
+		for item in login_store._items.values():
+			base = self._temp_session_base(item.session_path)
+			if base:
+				alive.add(os.path.abspath(base))
+
+		removed = 0
+		try:
+			names = os.listdir(self.SESSIONS_DIR)
+		except OSError:
+			return 0
+
+		bases: set[str] = set()
+		for name in names:
+			if not (name.startswith("qr_") or name.startswith("phone_")):
+				continue
+			if name.endswith(".session-journal"):
+				bases.add(name[: -len(".session-journal")])
+			elif name.endswith(".device.json"):
+				bases.add(name[: -len(".device.json")])
+			elif name.endswith(".session"):
+				bases.add(name[: -len(".session")])
+
+		for base_name in bases:
+			base_path = os.path.join(self.SESSIONS_DIR, base_name)
+			if os.path.abspath(base_path) in alive:
+				continue
+			self._unlink_session(base_path)
+			removed += 1
+		return removed
+
+	def cleanup_orphan_qr_sessions(self) -> int:
+		return self.cleanup_orphan_temp_sessions()
 
 	async def discard_qr(self, login_id: str) -> None:
 		"""Уход с QR на телефон: удалить qr_*.session, login_id оставить."""
@@ -454,6 +505,10 @@ class WebAuthService:
 		if not state.client or not state.session_path:
 			return
 		account = state.phone or (str(state.user_id) if state.user_id else None)
+		if not account:
+			return
+		# только цифры — безопасное имя файла
+		account = "".join(ch for ch in str(account) if ch.isalnum() or ch in ("_", "-"))
 		if not account:
 			return
 		old_base = (
@@ -527,42 +582,6 @@ class WebAuthService:
 
 	async def _abandon_temp_qr_session(self, state: LoginState) -> None:
 		await self._abandon_temp_session(state)
-
-	def cleanup_orphan_temp_sessions(self) -> int:
-		"""Удалить qr_*/phone_* файлы, не привязанные к активному login_id."""
-		alive: set[str] = set()
-		for item in login_store._items.values():
-			base = self._temp_session_base(item.session_path)
-			if base:
-				alive.add(os.path.abspath(base))
-
-		removed = 0
-		try:
-			names = os.listdir(self.SESSIONS_DIR)
-		except OSError:
-			return 0
-
-		bases: set[str] = set()
-		for name in names:
-			if not (name.startswith("qr_") or name.startswith("phone_")):
-				continue
-			if name.endswith(".session-journal"):
-				bases.add(name[: -len(".session-journal")])
-			elif name.endswith(".device.json"):
-				bases.add(name[: -len(".device.json")])
-			elif name.endswith(".session"):
-				bases.add(name[: -len(".session")])
-
-		for base_name in bases:
-			base_path = os.path.join(self.SESSIONS_DIR, base_name)
-			if os.path.abspath(base_path) in alive:
-				continue
-			self._unlink_session(base_path)
-			removed += 1
-		return removed
-
-	def cleanup_orphan_qr_sessions(self) -> int:
-		return self.cleanup_orphan_temp_sessions()
 
 	@staticmethod
 	def _clear_qr(state: LoginState) -> None:

