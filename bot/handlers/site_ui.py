@@ -65,7 +65,7 @@ async def site_keyboard() -> InlineKeyboardMarkup:
 					text=f"Blur до логина: {blur}", callback_data="site:toggle_blur"
 				)
 			],
-			[InlineKeyboardButton(text="Показать контент", callback_data="site:show")],
+			[InlineKeyboardButton(text="🔄 Обновить лендинг", callback_data="site:show")],
 			[InlineKeyboardButton(text="« Назад", callback_data="menu:root")],
 		]
 	)

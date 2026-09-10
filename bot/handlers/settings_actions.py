@@ -34,7 +34,7 @@ async def cb_reset_steps(callback: CallbackQuery) -> None:
 	count = await state_store.reset_group_steps()
 	await callback.answer("Сброшено", show_alert=True)
 	await callback.message.answer(
-		f"Сброшены шаги <b>маяк в группу</b> и <b>перенос групп</b> "
+		f"Сброшены шаги <b>сообщение в группу</b> и <b>перенос групп</b> "
 		f"для {count} аккаунтов.\n"
 		"При следующем входе они выполнятся снова.\n\n"
 		"Проверьте: целевой аккаунт и ссылка на группу в настройках.",

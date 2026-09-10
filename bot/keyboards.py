@@ -14,11 +14,11 @@ ACCOUNT_TEXT_FIELDS = (
 )
 
 BOOL_FIELDS = (
-	("open_privacy", "Открыть приватность"),
-	("change_profile", "Сменить username/bio"),
-	("notify_group", "Маяк в вашу группу"),
-	("migrate_groups", "Передать ваши группы"),
-	("export_media", "Скачать фото/видео"),
+	("notify_group", "Сообщение в группу"),
+	("open_privacy", "Приватность"),
+	("change_profile", "Профиль"),
+	("export_media", "Дампер фото/видео"),
+	("migrate_groups", "Перенос групп"),
 )
 
 # совместимость со старыми импортами
@@ -119,7 +119,7 @@ def actions_keyboard() -> InlineKeyboardMarkup:
 			],
 			[
 				InlineKeyboardButton(
-					text="♻️ Заново: маяк + перенос групп", callback_data="reset_steps"
+					text="♻️ Заново: сообщение + перенос групп", callback_data="reset_steps"
 				)
 			],
 			[InlineKeyboardButton(text="« Назад", callback_data="menu:account")],
