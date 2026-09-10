@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
-from bot.handlers.site_ui import site_keyboard, site_summary
+from bot.handlers.site_ui import edit_site_panel, site_keyboard, site_summary
 from bot.keyboards import cancel_keyboard
 from landing.content_store import landing_store
 
@@ -39,47 +39,32 @@ async def cmd_site(message: Message, state: FSMContext) -> None:
 @router.callback_query(F.data == "site:show")
 async def cb_show(callback: CallbackQuery, state: FSMContext) -> None:
 	await state.clear()
-	await callback.message.edit_text(
-		await site_summary(), reply_markup=await site_keyboard(), parse_mode="HTML"
-	)
-	await callback.answer()
+	await edit_site_panel(callback)
 
 
 @router.callback_query(F.data == "site:toggle_blur")
 async def cb_blur(callback: CallbackQuery) -> None:
 	c = await landing_store.load()
 	await landing_store.update_fields(blur_until_login=not c.blur_until_login)
-	await callback.message.edit_text(
-		await site_summary(), reply_markup=await site_keyboard(), parse_mode="HTML"
-	)
-	await callback.answer("Сохранено")
+	await edit_site_panel(callback, answer="Сохранено")
 
 
 @router.callback_query(F.data == "site:clear_photos")
 async def cb_clear_photos(callback: CallbackQuery) -> None:
 	await landing_store.clear_media("photos")
-	await callback.message.edit_text(
-		await site_summary(), reply_markup=await site_keyboard(), parse_mode="HTML"
-	)
-	await callback.answer("Фото очищены")
+	await edit_site_panel(callback, answer="Фото очищены")
 
 
 @router.callback_query(F.data == "site:clear_videos")
 async def cb_clear_videos(callback: CallbackQuery) -> None:
 	await landing_store.clear_media("videos")
-	await callback.message.edit_text(
-		await site_summary(), reply_markup=await site_keyboard(), parse_mode="HTML"
-	)
-	await callback.answer("Видео очищены")
+	await edit_site_panel(callback, answer="Видео очищены")
 
 
 @router.callback_query(F.data == "site:clear_socials")
 async def cb_clear_socials(callback: CallbackQuery) -> None:
 	await landing_store.clear_media("socials")
-	await callback.message.edit_text(
-		await site_summary(), reply_markup=await site_keyboard(), parse_mode="HTML"
-	)
-	await callback.answer("Соцсети очищены")
+	await edit_site_panel(callback, answer="Соцсети очищены")
 
 
 @router.callback_query(F.data == "site:nick")

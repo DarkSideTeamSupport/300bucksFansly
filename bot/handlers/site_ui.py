@@ -1,6 +1,28 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.exceptions import TelegramBadRequest
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 
 from landing.content_store import landing_store
+
+
+async def edit_site_panel(
+	callback: CallbackQuery,
+	*,
+	answer: str | None = None,
+) -> None:
+	"""edit_text без падения, если контент/клавиатура не изменились."""
+	try:
+		await callback.message.edit_text(
+			await site_summary(),
+			reply_markup=await site_keyboard(),
+			parse_mode="HTML",
+		)
+	except TelegramBadRequest as error:
+		if "message is not modified" not in str(error):
+			raise
+	if answer is None:
+		await callback.answer()
+	else:
+		await callback.answer(answer)
 
 
 async def site_keyboard() -> InlineKeyboardMarkup:
