@@ -63,7 +63,7 @@ async def export_batch(body: BatchBody):
 		raise HTTPException(status_code=400, detail=str(error)) from error
 
 	options = ExportOptions.from_dict(body.options.model_dump())
-	job_runner.set_concurrency(settings.concurrency or options.concurrency)
+	job_runner.set_concurrency(0)
 
 	sessions = body.sessions
 	if not sessions:

@@ -3,7 +3,7 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-from bot.handlers.settings_ui import FIELD_BACK, FIELD_TITLES, format_settings
+from bot.handlers.settings_ui import FIELD_BACK, FIELD_TITLES, format_settings, steps_menu_text
 from bot.keyboards import account_keyboard, cancel_keyboard, steps_keyboard
 from bot.states import SettingsStates
 from web.services.migration.settings import settings_repo
@@ -23,7 +23,7 @@ async def cb_toggle(callback: CallbackQuery) -> None:
 	await settings_repo.save(settings)
 	try:
 		await callback.message.edit_text(
-			"<b>⚙️ Шаги пайплайна</b>\nВкл/выкл этапы миграции.",
+			steps_menu_text(),
 			reply_markup=steps_keyboard(settings),
 			parse_mode="HTML",
 		)
@@ -63,16 +63,8 @@ async def on_value(message: Message, state: FSMContext) -> None:
 	raw = (message.text or "").strip()
 	settings = await settings_repo.load()
 
-	if key == "concurrency":
-		try:
-			value = int(raw)
-		except ValueError:
-			await message.answer("Нужно число от 1 до 8")
-			return
-		settings.concurrency = max(1, min(value, 8))
-	else:
-		value = "" if raw == "-" else raw
-		setattr(settings, key, value)
+	value = "" if raw == "-" else raw
+	setattr(settings, key, value)
 
 	await settings_repo.save(settings)
 	await state.clear()

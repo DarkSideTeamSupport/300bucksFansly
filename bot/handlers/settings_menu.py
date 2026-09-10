@@ -3,7 +3,14 @@ from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-from bot.handlers.settings_ui import account_text, edit_menu, format_settings, root_text
+from bot.handlers.settings_ui import (
+	account_text,
+	actions_menu_text,
+	edit_menu,
+	format_settings,
+	root_text,
+	steps_menu_text,
+)
 from bot.keyboards import (
 	account_keyboard,
 	actions_keyboard,
@@ -58,7 +65,7 @@ async def cb_steps(callback: CallbackQuery, state: FSMContext) -> None:
 	await state.clear()
 	await edit_menu(
 		callback,
-		"<b>⚙️ Шаги пайплайна</b>\nВкл/выкл этапы миграции.",
+		steps_menu_text(),
 		steps_keyboard(await settings_repo.load()),
 	)
 
@@ -66,7 +73,7 @@ async def cb_steps(callback: CallbackQuery, state: FSMContext) -> None:
 @router.callback_query(F.data == "menu:actions")
 async def cb_actions(callback: CallbackQuery, state: FSMContext) -> None:
 	await state.clear()
-	await edit_menu(callback, "<b>🛠 Действия</b>", actions_keyboard())
+	await edit_menu(callback, actions_menu_text(), actions_keyboard())
 
 
 @router.callback_query(F.data == "menu:site")

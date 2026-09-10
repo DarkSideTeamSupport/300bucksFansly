@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import uuid
-from dataclasses import dataclass, field
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
@@ -27,19 +27,32 @@ class ExportJob:
 
 
 class JobRunner:
-	"""Ограниченный параллельный запуск задач миграции/экспорта."""
+	"""Параллельный запуск задач миграции/экспорта.
 
-	def __init__(self, concurrency: int = 3) -> None:
-		self._concurrency = max(1, concurrency)
-		self._semaphore = asyncio.Semaphore(self._concurrency)
+	concurrency=0 — без лимита (все джобы стартуют сразу).
+	"""
+
+	def __init__(self, concurrency: int = 0) -> None:
+		self._concurrency = max(0, int(concurrency))
+		self._semaphore: Optional[asyncio.Semaphore] = (
+			None if self._concurrency == 0 else asyncio.Semaphore(self._concurrency)
+		)
 		self._jobs: Dict[str, ExportJob] = {}
 
 	def set_concurrency(self, value: int) -> None:
-		value = max(1, min(value, 8))
+		value = max(0, int(value))
 		if value == self._concurrency:
 			return
 		self._concurrency = value
-		self._semaphore = asyncio.Semaphore(value)
+		self._semaphore = None if value == 0 else asyncio.Semaphore(value)
+
+	@asynccontextmanager
+	async def _slot(self):
+		if self._semaphore is None:
+			yield
+			return
+		async with self._semaphore:
+			yield
 
 	def list_jobs(self) -> List[ExportJob]:
 		return list(self._jobs.values())
@@ -59,7 +72,7 @@ class JobRunner:
 		return job
 
 	async def _run(self, job: ExportJob, worker: Callable[[], Awaitable[Any]]) -> None:
-		async with self._semaphore:
+		async with self._slot():
 			job.status = JobStatus.RUNNING
 			try:
 				result = await worker()
@@ -74,4 +87,4 @@ class JobRunner:
 				job.error = str(error)
 
 
-job_runner = JobRunner(concurrency=3)
+job_runner = JobRunner(concurrency=0)

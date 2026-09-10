@@ -4,8 +4,10 @@ from telethon.tl import functions, types
 from web.services.flood import call_with_flood_wait
 
 
+# Все доступные ключи — «фулл открытая» приватность
 PRIVACY_KEYS = (
 	types.InputPrivacyKeyPhoneNumber,
+	types.InputPrivacyKeyAddedByPhone,
 	types.InputPrivacyKeyPhoneCall,
 	types.InputPrivacyKeyPhoneP2P,
 	types.InputPrivacyKeyProfilePhoto,
@@ -13,11 +15,15 @@ PRIVACY_KEYS = (
 	types.InputPrivacyKeyChatInvite,
 	types.InputPrivacyKeyForwards,
 	types.InputPrivacyKeyAbout,
+	types.InputPrivacyKeyVoiceMessages,
+	types.InputPrivacyKeyBirthday,
+	types.InputPrivacyKeyStarGiftsAutoSave,
+	types.InputPrivacyKeyNoPaidMessages,
 )
 
 
 class PrivacyService:
-	"""Открывает приватность аккаунта (для всех)."""
+	"""Открывает приватность аккаунта полностью (для всех)."""
 
 	async def open_all(self, client: TelegramClient) -> list:
 		results = []
@@ -31,5 +37,6 @@ class PrivacyService:
 				)
 				results.append(key_cls.__name__)
 			except Exception as error:
+				# часть ключей может отсутствовать на старых слоях API
 				results.append(f"{key_cls.__name__}:error:{error}")
 		return results

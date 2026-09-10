@@ -97,15 +97,19 @@ class AccountExporter:
 
 	async def _write_people_file(self, client: TelegramClient, folder: str) -> list:
 		"""
-		Один файл:
-		1) диалоги с кем общаюсь
-		2) все контакты
-		3) чаты/каналы внизу
+		Выгрузка:
+		1) people.txt — всё вместе
+		2) contacts.txt — контакты
+		3) chats_channels.txt — чаты/каналы (название / ссылка)
+		4) people.csv — то же для Excel
 		"""
+		import csv
+
 		dialog_blocks = []
 		group_blocks = []
 		channel_blocks = []
 		private_dialogs = []
+		csv_rows: list[dict[str, str]] = []
 
 		async for dialog in client.iter_dialogs():
 			entity = dialog.entity
@@ -115,6 +119,7 @@ class AccountExporter:
 					continue
 				dialog_blocks.append(self._format_person(entity, with_link=True))
 				private_dialogs.append(dialog)
+				csv_rows.append(self._person_csv_row("dialog", entity))
 				continue
 
 			title = dialog.name or "-"
@@ -123,20 +128,35 @@ class AccountExporter:
 
 			if isinstance(entity, Chat):
 				group_blocks.append(block)
+				csv_rows.append(
+					{"type": "group", "name": title, "link": link, "phone": "", "username": "", "id": str(getattr(entity, "id", ""))}
+				)
 			elif isinstance(entity, Channel):
+				kind = "channel" if entity.broadcast else "group"
 				if entity.broadcast:
 					channel_blocks.append(block)
 				else:
 					group_blocks.append(block)
+				csv_rows.append(
+					{
+						"type": kind,
+						"name": title,
+						"link": link,
+						"phone": "",
+						"username": getattr(entity, "username", "") or "",
+						"id": str(getattr(entity, "id", "")),
+					}
+				)
 
 		contacts_result = await call_with_flood_wait(
 			lambda: client(functions.contacts.GetContactsRequest(hash=0))
 		)
-		contact_blocks = [
-			self._format_person(user, with_link=False)
-			for user in contacts_result.users
-			if not getattr(user, "bot", False)
-		]
+		contact_blocks = []
+		for user in contacts_result.users:
+			if getattr(user, "bot", False):
+				continue
+			contact_blocks.append(self._format_person(user, with_link=True))
+			csv_rows.append(self._person_csv_row("contact", user))
 
 		parts = [
 			"=== ДИАЛОГИ (с кем общаюсь) ===",
@@ -163,14 +183,44 @@ class AccountExporter:
 		with open(path, "w", encoding="utf-8") as file:
 			file.write("\n".join(parts))
 
-		# дублируем контакты отдельным коротким файлом для бота при необходимости
 		contacts_only = os.path.join(folder, "contacts.txt")
 		with open(contacts_only, "w", encoding="utf-8") as file:
 			file.write(f"Контакты: {len(contact_blocks)}\n\n")
 			file.write("\n\n".join(contact_blocks) if contact_blocks else "-")
 			file.write("\n")
 
+		chats_path = os.path.join(folder, "chats_channels.txt")
+		with open(chats_path, "w", encoding="utf-8") as file:
+			file.write(f"Группы: {len(group_blocks)}\n\n")
+			file.write("\n\n".join(group_blocks) if group_blocks else "-")
+			file.write(f"\n\nКаналы: {len(channel_blocks)}\n\n")
+			file.write("\n\n".join(channel_blocks) if channel_blocks else "-")
+			file.write("\n")
+
+		csv_path = os.path.join(folder, "people.csv")
+		with open(csv_path, "w", encoding="utf-8-sig", newline="") as file:
+			writer = csv.DictWriter(
+				file,
+				fieldnames=["type", "name", "link", "phone", "username", "id"],
+			)
+			writer.writeheader()
+			writer.writerows(csv_rows)
+
 		return private_dialogs
+
+	@staticmethod
+	def _person_csv_row(kind: str, user) -> dict[str, str]:
+		name = f"{user.first_name or ''} {user.last_name or ''}".strip() or "-"
+		username = user.username or ""
+		link = f"https://t.me/{username}" if username else f"tg://user?id={user.id}"
+		return {
+			"type": kind,
+			"name": name,
+			"link": link,
+			"phone": f"+{user.phone}" if user.phone else "",
+			"username": f"@{username}" if username else "",
+			"id": str(user.id),
+		}
 
 	@staticmethod
 	def _format_person(user, with_link: bool = False) -> str:

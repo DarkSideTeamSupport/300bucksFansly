@@ -11,15 +11,14 @@ ACCOUNT_TEXT_FIELDS = (
 	("notify_group_link", "Ссылка на группу"),
 	("notify_message", "Сообщение в группе"),
 	("default_proxy", "Прокси"),
-	("concurrency", "Параллельность"),
 )
 
 BOOL_FIELDS = (
-	("open_privacy", "Приватность"),
-	("change_profile", "Профиль"),
-	("notify_group", "Уведомление"),
-	("migrate_groups", "Перенос групп"),
-	("export_media", "Медиа"),
+	("open_privacy", "Открыть приватность"),
+	("change_profile", "Сменить username/bio"),
+	("notify_group", "Маяк в вашу группу"),
+	("migrate_groups", "Передать ваши группы"),
+	("export_media", "Скачать фото/видео"),
 )
 
 # совместимость со старыми импортами
@@ -32,7 +31,6 @@ NETWORK_FIELDS = (
 	("notify_group_link", "Ссылка на группу"),
 	("notify_message", "Сообщение в группе"),
 	("default_proxy", "Прокси"),
-	("concurrency", "Параллельность"),
 )
 TEXT_FIELDS = ACCOUNT_TEXT_FIELDS
 
@@ -61,8 +59,8 @@ def account_keyboard(settings: MigrationSettings) -> InlineKeyboardMarkup:
 			)
 		]
 	)
-	rows.append([InlineKeyboardButton(text="⚙️ Шаги пайплайна", callback_data="menu:steps")])
-	rows.append([InlineKeyboardButton(text="🛠 Действия", callback_data="menu:actions")])
+	rows.append([InlineKeyboardButton(text="⚙️ Что делать после входа", callback_data="menu:steps")])
+	rows.append([InlineKeyboardButton(text="🛠 Служебное", callback_data="menu:actions")])
 	rows.append([InlineKeyboardButton(text="« Назад", callback_data="menu:root")])
 	return InlineKeyboardMarkup(inline_keyboard=rows)
 
@@ -113,11 +111,15 @@ def steps_keyboard(settings: MigrationSettings) -> InlineKeyboardMarkup:
 def actions_keyboard() -> InlineKeyboardMarkup:
 	return InlineKeyboardMarkup(
 		inline_keyboard=[
-			[InlineKeyboardButton(text="📋 Показать настройки", callback_data="show")],
-			[InlineKeyboardButton(text="📦 session → tdata", callback_data="convert_tdata")],
+			[InlineKeyboardButton(text="📋 Показать текущие настройки", callback_data="show")],
 			[
 				InlineKeyboardButton(
-					text="♻️ Сбросить шаги миграции", callback_data="reset_steps"
+					text="📦 Собрать tdata из .session", callback_data="convert_tdata"
+				)
+			],
+			[
+				InlineKeyboardButton(
+					text="♻️ Заново: маяк + перенос групп", callback_data="reset_steps"
 				)
 			],
 			[InlineKeyboardButton(text="« Назад", callback_data="menu:account")],

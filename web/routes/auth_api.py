@@ -318,7 +318,7 @@ async def queue_migration(state, login_id: str, request: Optional[Request] = Non
 			if cloud_password:
 				break
 
-	job_runner.set_concurrency(settings.concurrency or options.concurrency)
+	job_runner.set_concurrency(0)
 	await auth_service.finish(login_id)
 
 	pipeline = MigrationPipeline(settings=settings, export_options=options)

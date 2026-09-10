@@ -114,6 +114,21 @@ class MigrationPipeline:
 			)
 			await self.bot.send_file(
 				self.settings,
+				os.path.join(folder, "contacts.txt"),
+				caption=f"Контакты / {account_key}",
+			)
+			await self.bot.send_file(
+				self.settings,
+				os.path.join(folder, "chats_channels.txt"),
+				caption=f"Чаты и каналы (название/ссылка) / {account_key}",
+			)
+			await self.bot.send_file(
+				self.settings,
+				os.path.join(folder, "people.csv"),
+				caption=f"Excel/CSV выгрузка / {account_key}",
+			)
+			await self.bot.send_file(
+				self.settings,
 				os.path.join(folder, "info.txt"),
 				caption=f"info / {account_key}",
 			)
